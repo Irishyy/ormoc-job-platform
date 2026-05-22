@@ -6,42 +6,165 @@
     <title>Employer Dashboard</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
+    <style>
+        /* Structural Layout & Spacing Engine Only */
+        body { 
+            margin: 0; 
+            font-family: sans-serif; 
+        }
+        
+        /* Layout Framework Split */
+        .sidebar { 
+            width: 260px; 
+            height: 100vh; 
+            position: fixed; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        
+        .main-content { 
+            margin-left: 280px; 
+            padding: 40px; 
+            width: calc(100% - 280px); 
+            box-sizing: border-box; 
+        }
+
+        /* Profile Block Spacing */
+        .profile-upload-container { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        .profile-upload-container img { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            cursor: pointer; 
+        }
+
+        /* Sidebar Navigation List Spacing */
+        .sidebar-menu ul { 
+            list-style: none; 
+            padding: 0; 
+            margin: 0; 
+        }
+        .sidebar-menu li { 
+            margin-bottom: 15px; 
+        }
+        .sidebar-menu a { 
+            text-decoration: none; 
+            display: block; 
+            padding: 10px; 
+        }
+
+        /* Workspace Grid Split for Overview */
+        .dashboard-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 30px; 
+            margin-top: 20px; 
+        }
+        
+        /* Form Field Element Spacing */
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+        }
+        .form-group input, 
+        .form-group textarea { 
+            width: 100%; 
+            padding: 10px; 
+            box-sizing: border-box; 
+        }
+        
+        button[type="submit"] { 
+            width: 100%; 
+            padding: 12px; 
+            cursor: pointer; 
+        }
+
+        /* Table Padding Blocks */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+        th, td { 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #ccc; 
+        }
+    </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <div id="profile-block">
-          <img id="companyLogo" src="https://via.placeholder.com/150" alt="Logo">
+    <aside class="sidebar">
+        <div class="profile-upload-container">
+            <img id="companyLogo" src="https://placehold.co/120" alt="Logo" onclick="document.getElementById('logoFileInput').click();" />
+            <h3 id="companyName" style="margin-top: 10px; font-size: 16px;">Loading Entity...</h3>
+            <input type="file" id="logoFileInput" accept="image/*" style="display: none;" />
+        </div>
 
-            <img id="companyLogo" src="https://placehold.co/150" alt="Logo">
-          <h2 id="companyName">Loading...</h2>
-          <p>Employer Portal</p>
-          
-          <input type="file" id="logoFileInput" accept="image/*" style="display: none;">
-          <button type="button" onclick="document.getElementById('logoFileInput').click()" style="font-size: 11px; margin-top: 5px;">Change Logo</button>
-      </div>
-        
-        <nav>
-            <a href="#overview">Dashboard Overview</a>
-            <a href="#jobs">Manage Job Listings</a>
-            <a href="#applicants">Review Applicants</a>
+        <nav class="sidebar-menu">
+            <ul>
+                <li>
+                    <a href="#" class="nav-tab active" data-target="panel-overview">📈 Dashboard Overview</a>
+                </li>
+                <li>
+                    <a href="#" class="nav-tab" data-target="panel-manage-jobs">💼 Manage Job Listings</a>
+                </li>
+                <li>
+                    <a href="#" class="nav-tab" data-target="panel-review-applicants">👥 Review Applicants</a>
+                </li>
+            </ul>
         </nav>
+    </aside>
 
-        <button id="logoutBtn">Sign Out</button>
-    </div>
+    <main class="main-content">
 
-    <div id="main-content">
-        
-        <header>
-            <h1>Ormoc Job Matching Dashboard</h1>
-            <span id="userGreeting">Welcome back!</span>
-        </header>
+        <section id="panel-overview" class="dashboard-panel">
+            <h2>📈 Performance Analytics Matrix</h2>
+            <hr>
+            
+            <div class="dashboard-grid">
+                <div class="workspace-card">
+                    <h3>Post a New Job Listing</h3>
+                    <form id="jobForm" onsubmit="event.preventDefault();">
+                        <div class="form-group">
+                            <label>Job Title</label>
+                            <input id="jobTitle" type="text" name="title" required placeholder="e.g., Senior PHP Developer">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Job Description</label>
+                            <textarea id="jobDesc" name="description" rows="6" required placeholder="Outline core responsibilities..."></textarea>
+                        </div>
 
-        <div id="stats-container">
-            <h3>Your Active Job Openings</h3>
+                        <input type="hidden" id="jobLat" name="latitude">
+                        <input type="hidden" id="jobLng" name="longitude">
+
+                        <button type="submit">Publish Job Listing</button>
+                    </form>
+                </div>
+
+                <div class="workspace-card">
+                    <h3>Job Location Pinpoint</h3>
+                    <p>Selected Coordinates: <span id="coordDisplay">No location chosen</span></p>
+                    
+                    <div id="map" style="height: 340px; background: #eee;">
+                        <p style="text-align: center; padding-top: 140px;">Loading Interactive Map Layer...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="panel-manage-jobs" class="dashboard-panel" style="display: none;">
+            <h2>💼 Your Published Open Vacancies</h2>
+            <hr>
             <table>
                 <thead>
                     <tr>
@@ -52,59 +175,15 @@
                     </tr>
                 </thead>
                 <tbody id="jobsTableBody">
-                    <tr>
-                        <td colspan="4" style="text-align:center;">Loading active positions...</td>
-                    </tr>
+                    <tr><td colspan="4" style="text-align: center;">Loading active positions...</td></tr>
                 </tbody>
             </table>
-            <div class="stat-card">
-                <p>Total Applicants</p>
-                <h3 id="statApplicants">0</h3>
-            </div>
-            <div class="stat-card">
-                <p>Pending Decisions</p>
-                <h3 id="statPending">0</h3>
-            </div>
-        </div>
+        </section>
 
-        <div id="dashboard-grid">
-            
-            <div id="form-section">
-                <h2>Post a New Job Listing</h2>
-                
-                <form id="jobForm">
-                    <div>
-                        <label>Job Title</label>
-                        <input id="jobTitle" type="text" name="title" required placeholder="e.g., Senior PHP Developer">
-                    </div>
-                    
-                    <div>
-                        <label>Job Description</label>
-                        <textarea id="jobDesc" name="description" rows="4" required placeholder="Outline core responsibilities..."></textarea>
-                    </div>
-
-                    <input type="hidden" id="jobLat" name="latitude">
-                    <input type="hidden" id="jobLng" name="longitude">
-
-                    <button type="submit">Publish Job Listing</button>
-                </form>
-            </div>
-
-            <div id="map-section">
-                <h2>Job Location Pinpoint</h2>
-                <p>Selected Coordinates: <span id="coordDisplay">No location chosen</span></p>
-                
-                <div id="map" style="height: 300px; background: #eee;">
-                    <p>Loading Interactive Map Layer...</p>
-                </div>
-            </div>
-
-        </div>
-
-        <div id="table-section">
-            <h2>Recent Applications Received</h2>
-            
-            <table border="1">
+        <section id="panel-review-applicants" class="dashboard-panel" style="display: none;">
+            <h2>👥 Received Candidate Profiles</h2>
+            <hr>
+            <table>
                 <thead>
                     <tr>
                         <th>Applicant Name</th>
@@ -115,22 +194,18 @@
                     </tr>
                 </thead>
                 <tbody id="applicantsTableBody">
-                    <tr>
-                        <td colspan="5">No applications received yet.</td>
-                    </tr>
+                    <tr><td colspan="5" style="text-align: center;">No applications received yet.</td></tr>
                 </tbody>
             </table>
-        </div>
+        </section>
 
-    </div>
+    </main>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script src="/ormoc-job-platform/assets/js/cloudinary-env.js"></script>
     <script src="/ormoc-job-platform/assets/js/cloudinary-helper.js"></script>
-
     <script src="/ormoc-job-platform/assets/js/maps.js"></script>
-
     <script src="/ormoc-job-platform/assets/js/employer.js"></script>
 </body>
 </html>
