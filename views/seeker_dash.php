@@ -9,6 +9,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../assets/js/cloudinary-env.js"></script>
+    <script src="../assets/js/cloudinary-helper.js"></script>
+    <script src="../assets/js/seeker.js"></script>
 
     <link rel="stylesheet" href="../assets/css/seeker_dash.css">
 </head>

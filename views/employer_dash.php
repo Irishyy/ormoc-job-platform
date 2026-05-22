@@ -14,10 +14,13 @@
 
     <div id="sidebar">
         <div id="profile-block">
-            <img id="companyLogo" src="" alt="Company Logo">
-            <h2 id="companyName">Loading...</h2>
-            <p>Employer Portal</p>
-        </div>
+          <img id="companyLogo" src="https://via.placeholder.com/150" alt="Company Logo" style="width: 100px; height: 100px; border-radius: 50%;">
+          <h2 id="companyName">Loading...</h2>
+          <p>Employer Portal</p>
+          
+          <input type="file" id="logoFileInput" accept="image/*" style="display: none;">
+          <button type="button" onclick="document.getElementById('logoFileInput').click()" style="font-size: 11px; margin-top: 5px;">Change Logo</button>
+      </div>
         
         <nav>
             <a href="#overview">Dashboard Overview</a>
@@ -107,6 +110,8 @@
 
     </div>
 
+    <script src="../assets/js/cloudinary-env.js"></script>
+    <script src="../assets/js/cloudinary-helper.js"></script>
     <script src="../assets/js/employer.js"></script>
 </body>
 </html>
