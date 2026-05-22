@@ -1,3 +1,51 @@
+function initializeTabSwitchingEngine() {
+  const tabLinks = document.querySelectorAll('.nav-tab');
+  const displayPanels = document.querySelectorAll('.dashboard-panel');
+
+  tabLinks.forEach(link => {
+    link.addEventListener('click', function(event) {
+      event.preventDefault(); // Lock down link execution parameter
+
+      // 1. Drop active color states from all navigation buttons
+      tabLinks.forEach(t => {
+        t.style.background = "transparent";
+        t.style.color = "#bdc3c7";
+        t.classList.remove('active');
+      });
+
+      // 2. Add highlight design to the clicked tab node
+      this.style.background = "#34495e";
+      this.style.color = "white";
+      this.classList.add('active');
+
+      // 3. Switch layout display visibility states across all panel views
+      const targetedPanelId = this.getAttribute('data-target');
+      
+      displayPanels.forEach(panel => {
+        if (panel.id === targetedPanelId) {
+          panel.style.display = "block";
+        } else {
+          panel.style.display = "none";
+        }
+      });
+
+      // 🔥 Leaflet Layout Patch Fix: If switching back to the map workspace view, 
+      // force Leaflet to recalibrate container boundaries instantly
+      if (targetedPanelId === 'panel-overview' && window.employerMap) {
+        setTimeout(() => {
+            window.employerMap.invalidateSize();
+        }, 50);
+      }
+    });
+  });
+}
+
+// Ensure you execute this setup inside your initialization trigger array!
+document.addEventListener("DOMContentLoaded", () => {
+    initializeTabSwitchingEngine();
+    // Your existing map and table data loading calls...
+});
+
 // 📍 Coordinates for Ormoc City Center
 const ORMOC_LAT = 11.0044;
 const ORMOC_LNG = 124.6075;
