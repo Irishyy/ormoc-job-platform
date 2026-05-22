@@ -1,0 +1,253 @@
+/* assets/css/seeker_dash.css */
+
+/* 1. Global Reset & Theme Variables */
+:root {
+    --primary-color: #2563eb;       /* Clean Modern Blue */
+    --primary-hover: #1d4ed8;
+    --bg-light: #f8fafc;            /* Soft slate background */
+    --text-main: #1e293b;           /* Dark slate text */
+    --text-muted: #64748b;          /* Soft grey text */
+    --white: #ffffff;
+    --border-color: #e2e8f0;
+    --success-green: #10b981;
+    --sidebar-width: 260px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    display: flex;
+    min-height: 100vh;
+}
+
+/* 2. Sidebar Navigation Layout */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--white);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+}
+
+.sidebar .logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 2.5rem;
+    padding-left: 0.5rem;
+}
+
+.sidebar-menu {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar-menu a:hover, 
+.sidebar-menu a.active {
+    background-color: #eff6ff;
+    color: var(--primary-color);
+}
+
+.sidebar .logout-btn {
+    margin-top: auto;
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.sidebar .logout-btn:hover {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+/* 3. Main Dashboard Window Workspace */
+.main-content {
+    margin-left: var(--sidebar-width);
+    flex-grow: 1;
+    padding: 2.5rem;
+}
+
+/* Header Area */
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.dash-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.user-profile-badge {
+    background-color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* 4. Statistics / Metric Summary Cards Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.metric-card {
+    background-color: var(--white);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.metric-card p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.metric-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* 5. Content Section Panels (e.g., Job Feeds / Applied History) */
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+}
+
+.jobs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Individual Job Cards */
+.job-card {
+    background-color: var(--white);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.job-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.job-details h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.job-details .company-name {
+    color: var(--primary-color);
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.job-meta-tags {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.tag {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.25rem;
+    background-color: var(--bg-light);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.tag.salary {
+    background-color: #f0fdf4;
+    color: var(--success-green);
+}
+
+/* Direct Action Buttons */
+.apply-btn {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.apply-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+/* 6. Responsive Fallback Breakpoint */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 1rem;
+    }
+    .sidebar .logo {
+        margin-bottom: 1rem;
+    }
+    .sidebar-menu {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 1.5rem;
+    }
+    .job-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .apply-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -1,0 +1,37 @@
+# ==========================================
+# 🛑 PROJECT-SPECIFIC CONFIGURATIONS & CREDENTIALS
+# ==========================================
+config/config.php
+.env
+
+# 🎓 Academic / Course Reference Materials (Local Only)
+_instructor_references/
+
+# ==========================================
+# ⚙️ OS / SYSTEM GENERATED FILES
+# ==========================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ==========================================
+# 💻 IDE & CODE EDITOR WORKSPACES
+# ==========================================
+.vscode/
+.cursor/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# ==========================================
+# 📦 VENDOR DEPENDENCIES & PACKAGE MANAGERS
+# ==========================================
+vendor/
+node_modules/
+*.log
