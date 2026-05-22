@@ -1,20 +1,46 @@
+// assets/js/cloudinary-helper.js
+
+// =========================================================
+// 🌐 GLOBAL CLOUDINARY CONFIGURATION CONFIG
+// =========================================================
+window.CLOUDINARY_NAME = "dxrvbwycv";
+window.CLOUDINARY_PRESET = "ormoc_job_matching_preset"; // 👈 Your preset goes here!
+
+// =========================================================
+// 📸 DIRECT CORE UPLOAD UTILITY ENGINE
+// =========================================================
 /**
- * Uploads any media file directly to Cloudinary bypassing the PHP backend.
- * @param {File} file - Binary file array data from input fields
- * @param {String} [targetFolder] - Destination directory string name ('company_logos' or 'seeker_resumes')
- * @returns {Promise<String>} - The secure hosted absolute URL string
+ * Uploads a raw binary file directly to your Cloudinary media bucket.
+ * @param {File} fileBytes - The raw file object from the input field
+ * @param {string} folderTarget - The directory folder name inside Cloudinary
+ * @returns {Promise<string>} - The secure permanent URL string from Cloudinary
  */
-async function uploadToCloudinary(file, targetFolder = '') {
-    var formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", CloudinaryEnv.uploadPreset);
-    formData.append("folder", targetFolder);
-
-    var res = await axios.post(CloudinaryEnv.uploadUrl, formData);
-
-    if (res.data && res.data.secure_url) {
-        return res.data.secure_url;
+async function uploadMediaFile(fileBytes, folderTarget = 'general') {
+    // Structural verification check
+    if (!window.CLOUDINARY_NAME || window.CLOUDINARY_PRESET === "your_actual_unsigned_preset_here") {
+        console.error("Cloudinary Configuration Error: Please provide your actual upload preset name string.");
+        throw new Error("Cloudinary setup parameters are incomplete.");
     }
 
-    return null;
+    // Build the Multi-part Form Data payload container
+    const formData = new FormData();
+    formData.append('file', fileBytes);
+    formData.append('upload_preset', window.CLOUDINARY_PRESET);
+    formData.append('folder', folderTarget);
+
+    const targetUrl = `https://api.cloudinary.com/v1_1/${window.CLOUDINARY_NAME}/image/upload`;
+
+    // Fire the direct cloud delivery network stream
+    const uploadResult = await axios.post(targetUrl, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    // Return the secure URL path back to the parent execution routine
+    if (uploadResult.data && uploadResult.data.secure_url) {
+        return uploadResult.data.secure_url;
+    } else {
+        throw new Error("Invalid response schema packet received from Cloudinary storage cluster.");
+    }
 }

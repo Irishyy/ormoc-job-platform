@@ -6,15 +6,17 @@
     <title>Employer Dashboard</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
 </head>
 <body>
 
     <div id="sidebar">
         <div id="profile-block">
-          <img id="companyLogo" src="https://via.placeholder.com/150" alt="Company Logo" style="width: 100px; height: 100px; border-radius: 50%;">
+          <img id="companyLogo" src="https://via.placeholder.com/150" alt="Logo">
+
+            <img id="companyLogo" src="https://placehold.co/150" alt="Logo">
           <h2 id="companyName">Loading...</h2>
           <p>Employer Portal</p>
           
@@ -39,10 +41,22 @@
         </header>
 
         <div id="stats-container">
-            <div class="stat-card">
-                <p>Active Job Posts</p>
-                <h3 id="statActiveJobs">0</h3>
-            </div>
+            <h3>Your Active Job Openings</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job Title</th>
+                        <th>Date Posted</th>
+                        <th>Location Pins</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="jobsTableBody">
+                    <tr>
+                        <td colspan="4" style="text-align:center;">Loading active positions...</td>
+                    </tr>
+                </tbody>
+            </table>
             <div class="stat-card">
                 <p>Total Applicants</p>
                 <h3 id="statApplicants">0</h3>
@@ -58,15 +72,15 @@
             <div id="form-section">
                 <h2>Post a New Job Listing</h2>
                 
-                <form id="jobPostingForm">
+                <form id="jobForm">
                     <div>
                         <label>Job Title</label>
-                        <input type="text" name="title" required placeholder="e.g., Senior PHP Developer">
+                        <input id="jobTitle" type="text" name="title" required placeholder="e.g., Senior PHP Developer">
                     </div>
                     
                     <div>
                         <label>Job Description</label>
-                        <textarea name="description" rows="4" required placeholder="Outline core responsibilities..."></textarea>
+                        <textarea id="jobDesc" name="description" rows="4" required placeholder="Outline core responsibilities..."></textarea>
                     </div>
 
                     <input type="hidden" id="jobLat" name="latitude">
@@ -109,9 +123,14 @@
         </div>
 
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script src="../assets/js/cloudinary-env.js"></script>
-    <script src="../assets/js/cloudinary-helper.js"></script>
-    <script src="../assets/js/employer.js"></script>
+    <script src="/ormoc-job-platform/assets/js/cloudinary-env.js"></script>
+    <script src="/ormoc-job-platform/assets/js/cloudinary-helper.js"></script>
+
+    <script src="/ormoc-job-platform/assets/js/maps.js"></script>
+
+    <script src="/ormoc-job-platform/assets/js/employer.js"></script>
 </body>
 </html>
