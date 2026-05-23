@@ -1,279 +1,346 @@
-function initializeTabSwitchingEngine() {
-  const tabLinks = document.querySelectorAll('.nav-tab');
-  const displayPanels = document.querySelectorAll('.dashboard-panel');
-
-  tabLinks.forEach(link => {
-    link.addEventListener('click', function(event) {
-      event.preventDefault(); // Lock down link execution parameter
-
-      // 1. Drop active color states from all navigation buttons
-      tabLinks.forEach(t => {
-        t.style.background = "transparent";
-        t.style.color = "#bdc3c7";
-        t.classList.remove('active');
-      });
-
-      // 2. Add highlight design to the clicked tab node
-      this.style.background = "#34495e";
-      this.style.color = "white";
-      this.classList.add('active');
-
-      // 3. Switch layout display visibility states across all panel views
-      const targetedPanelId = this.getAttribute('data-target');
-      
-      displayPanels.forEach(panel => {
-        if (panel.id === targetedPanelId) {
-          panel.style.display = "block";
-        } else {
-          panel.style.display = "none";
-        }
-      });
-
-      // 🔥 Leaflet Layout Patch Fix: If switching back to the map workspace view, 
-      // force Leaflet to recalibrate container boundaries instantly
-      if (targetedPanelId === 'panel-overview' && window.employerMap) {
-        setTimeout(() => {
-            window.employerMap.invalidateSize();
-        }, 50);
-      }
-    });
-  });
-}
-
-// Ensure you execute this setup inside your initialization trigger array!
-document.addEventListener("DOMContentLoaded", () => {
-    initializeTabSwitchingEngine();
-    // Your existing map and table data loading calls...
-});
-
-// 📍 Coordinates for Ormoc City Center
-const ORMOC_LAT = 11.0044;
-const ORMOC_LNG = 124.6075;
-
-
-let employerMap;
-let selectedMarker = null;
-
-function initEmployerMap() {
-  // 1. Instantly tap into our global maps.js wrapper asset function!
-  employerMap = createBaseOrmocMap('map');
-  if (!employerMap) return;
-
-  // 2. Setup the simple map click listener for coordinate pinning
-  employerMap.on('click', function(event) {
-    const lat = event.latlng.lat;
-    const lng = event.latlng.lng;
-
-    // Sync inputs
-    document.getElementById('jobLat').value = lat;
-    document.getElementById('jobLng').value = lng;
-    document.getElementById('coordDisplay').innerText = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
-
-    if (selectedMarker) {
-        selectedMarker.setLatLng(event.latlng);
-    } else {
-        selectedMarker = L.marker(event.latlng).addTo(employerMap);
-    }
-  });
-}
-
-// =========================================================
-// 📸 2. CLOUDINARY LOGO MANAGEMENT HANDLER
-// =========================================================
-async function handleLogoChange(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const nameLabel = document.getElementById('companyName');
-  const originalText = nameLabel.innerText;
-  nameLabel.innerText = "Uploading Media Asset...";
-
-  try {
-    // Run your pre-existing global helper, routing into the logos folder
-    const directCloudUrl = await uploadMediaFile(file, 'company_logos');
-    
-    // Push string to backend profile updater case track
-    const response = await axios.post('../routes/api.php?action=save_employer_profile', {
-      company_name: originalText === "Loading..." ? "My Company" : originalText,
-      company_logo_url: directCloudUrl,
-      website: ""
-    });
-
-    if (response.data.status === 'success') {
-      document.getElementById('companyLogo').src = directCloudUrl;
-      nameLabel.innerText = "Profile Image Updated!";
-      setTimeout(() => { nameLabel.innerText = originalText; }, 2000);
-    } else {
-      alert("Database synchronization failure: " + response.data.message);
-    }
-  } catch (error) {
-    console.error("Cloudinary deployment crash:", error);
-    alert("Failed to push image to storage cluster.");
-    nameLabel.innerText = originalText;
-  }
-}
-
-// =========================================================
-// 🏢 3. CREATE & PUBLISH VACANCY DATA (POST)
-// =========================================================
-async function handleJobSubmission(event) {
-  event.preventDefault();
-
-  const title = document.getElementById('jobTitle').value;
-  const description = document.getElementById('jobDesc').value;
-  const latitude = document.getElementById('jobLat').value;
-  const longitude = document.getElementById('jobLng').value;
-
-  // Safety constraint validation loop check
-  if (!latitude || !longitude) {
-    alert("Error: You must pinpoint your business address location coordinate on the map layout.");
-    return;
-  }
-
-  const jobPayload = {
-    title: title,
-    description: description,
-    latitude: latitude,
-    longitude: longitude
-  };
-
-  try {
-    const response = await axios.post('../routes/api.php?action=publish_job', jobPayload);
-
-    if (response.data.status === 'success') {
-      alert("Success: Vacancy active on map views!");
-      document.getElementById('jobForm').reset();
-      if (selectedMarker && employerMap) {
-        employerMap.removeLayer(selectedMarker);
-        selectedMarker = null;
-      }
-      document.getElementById('coordDisplay').innerText = "No location chosen";
-      // Refresh local lookups data tables asynchronously
-      loadEmployerDashboardData();
-    } else {
-        alert("Publishing rejected: " + response.data.message);
-    }
-  } catch (error) {
-      console.error("Network interface fault:", error);
-      alert("Could not push job metadata array to endpoint system.");
-  }
-}
-
 // assets/js/employer.js
 
-// 📥 FETCH AND REFRESH ALL DASHBOARD METRICS (GET)
-async function loadEmployerDashboardData() {
-  try {
-    // --- 1. FETCH & RENDER ACTIVE JOB POSTS ---
-    const jobsResponse = await axios.get('../routes/api.php?action=get_employer_jobs');
-    const jobsTableBody = document.getElementById('jobsTableBody'); // Make sure this matches your HTML ID
+// =========================================================
+// 🗂️ TAB SINGLE-PAGE SWITCHING ROUTINES
+// =========================================================
+function initializeTabSwitchingEngine() {
+    var tabLinks     = document.querySelectorAll('.nav-tab');
+    var displayPanels = document.querySelectorAll('.dashboard-panel');
 
-    if (jobsResponse.data.status === 'success' && jobsTableBody) {
-      jobsTableBody.innerHTML = ""; // Clear old rows or loading text
-      
-      if (jobsResponse.data.data.length === 0) {
-        jobsTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#888;">No active vacancies published yet.</td></tr>`;
-      } else {
-        jobsResponse.data.data.forEach(job => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><strong>${job.title}</strong></td>
-            <td>${new Date(job.created_at).toLocaleDateString()}</td>
-            <td>Lat: ${parseFloat(job.latitude).toFixed(4)}, Lng: ${parseFloat(job.longitude).toFixed(4)}</td>
-            <td>
-              <button onclick="deleteJobListing(${job.id})" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">Delete</button>
-            </td>
-          `;
-          jobsTableBody.appendChild(tr);
+    tabLinks.forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            // 1. Drop active color states from all navigation buttons
+            tabLinks.forEach(function(t) {
+                t.style.background = "transparent";
+                t.style.color = "#bdc3c7";
+                t.classList.remove('active');
+            });
+
+            // 2. Highlight the clicked tab
+            this.style.background = "#34495e";
+            this.style.color = "white";
+            this.classList.add('active');
+
+            // 3. Switch display visibility across all panels
+            var targetedPanelId = this.getAttribute('data-target');
+
+            displayPanels.forEach(function(panel) {
+                if (panel.id === targetedPanelId) {
+                    panel.style.display = "block";
+                } else {
+                    panel.style.display = "none";
+                }
+            });
+
+            // Leaflet layout fix: recalibrate map on tab switch
+            if (targetedPanelId === 'panel-overview' && window.employerMap) {
+                setTimeout(function() {
+                    window.employerMap.invalidateSize();
+                }, 50);
+            }
         });
-      }
-    }
-
-    // --- 2. FETCH & RENDER INCOMING APPLICATIONS ---
-    const appResponse = await axios.get('../routes/api.php?action=get_employer_applications');
-    const applicantsTableBody = document.getElementById('applicantsTableBody');
-
-    if (appResponse.data.status === 'success' && applicantsTableBody) {
-        applicantsTableBody.innerHTML = ""; // Clear old rows
-        
-      if (appResponse.data.data.length === 0) {
-          applicantsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">No applications received yet.</td></tr>`;
-      } else {
-        appResponse.data.data.forEach(app => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-              <td><strong>${app.applicant_name}</strong></td>
-              <td>${app.job_title}</td>
-              <td><a href="${app.resume_url}" target="_blank" style="color: blue; text-decoration: underline;">Open Document</a></td>
-              <td><span class="status-pill status-${app.status}">${app.status.toUpperCase()}</span></td>
-              <td>
-                  <button onclick="updateStatus(${app.application_id}, 'accepted')" style="background:green; color:white; font-size:11px; border:none; padding:2px 6px; cursor:pointer; margin-right:2px;">Accept</button>
-                  <button onclick="updateStatus(${app.application_id}, 'rejected')" style="background:red; color:white; font-size:11px; border:none; padding:2px 6px; cursor:pointer;">Reject</button>
-              </td>`;
-            applicantsTableBody.appendChild(tr);
-        });
-      }
-    }
-  } catch (error) {
-    console.error("Error loading dashboard data streams:", error);
-  }
-}
-
-// Action utility case track to change application tracking state values
-async function updateStatus(applicationId, newStatus) {
-  try {
-    const response = await axios.post('../routes/api.php?action=update_application_status', {
-      application_id: applicationId,
-      status: newStatus
     });
-    if (response.data.status === 'success') {
-      loadEmployerDashboardData(); // Reload structural view tables instantly
-    }
-  } catch (err) {
-    console.error(err);
-  }
 }
 
 // =========================================================
-// 🚀 ENGINE LAUNCH EVENT INITIALIZATION LOOP
+// 🗺️ MAP WORKSPACE INITIALIZATION
 // =========================================================
-document.addEventListener("DOMContentLoaded", function() {
-  initEmployerMap();
-  loadEmployerDashboardData();
+var employerMap;
+var selectedMarker = null;
 
-  // Dynamically wire up forms and inputs safely without breaking old templates
-  document.getElementById('jobForm')?.addEventListener('submit', handleJobSubmission);
-  
-  // Create click event hook shortcut to listen for profile image alterations
-  const fileInput = document.getElementById('logoFileInput');
-  if (fileInput) {
-      fileInput.addEventListener('change', handleLogoChange);
-  }
-});
+function initEmployerMap() {
+    employerMap = createBaseOrmocMap('map');
+    if (!employerMap) return;
 
-/**
- * Sends an asynchronous request to remove a job listing after confirmation.
- * @param {number} jobId - The auto-incremented primary key ID of the job listing
- */
+    window.employerMap = employerMap;
+
+    employerMap.on('click', function(event) {
+        var lat = event.latlng.lat;
+        var lng = event.latlng.lng;
+
+        var jobLatInput  = document.getElementById('jobLat');
+        var jobLngInput  = document.getElementById('jobLng');
+        var coordDisplay = document.getElementById('coordDisplay');
+
+        if (jobLatInput)  jobLatInput.value  = lat;
+        if (jobLngInput)  jobLngInput.value  = lng;
+        if (coordDisplay) coordDisplay.innerText = 'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5);
+
+        if (selectedMarker) {
+            selectedMarker.setLatLng(event.latlng);
+        } else {
+            selectedMarker = L.marker(event.latlng).addTo(employerMap);
+        }
+    });
+}
+
+// =========================================================
+// 📸 CLOUDINARY LOGO UPLOAD HANDLER
+// =========================================================
+async function handleLogoChange(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+
+    var nameLabel    = document.getElementById('companyName');
+    var companyInput = document.getElementById('companyNameInput');
+    var originalText = nameLabel ? nameLabel.innerText : "My Company";
+
+    if (nameLabel) nameLabel.innerText = "Uploading Media Asset...";
+
+    try {
+        var directCloudUrl = await uploadMediaFile(file, 'company_logos');
+
+        var currentName = companyInput ? companyInput.value.trim() : originalText;
+        if (!currentName || currentName === "Loading...") {
+            currentName = originalText !== "Loading..." ? originalText : "My Company";
+        }
+
+        var response = await axios.post('../routes/api.php?action=save_employer_profile', {
+            company_name: currentName,
+            company_logo_url: directCloudUrl,
+            website: ""
+        });
+
+        if (response.data.status === 'success') {
+            var companyLogo = document.getElementById('companyLogo');
+            if (companyLogo) companyLogo.src = directCloudUrl;
+            if (nameLabel) nameLabel.innerText = "Profile Image Updated!";
+            setTimeout(function() {
+                if (nameLabel) nameLabel.innerText = currentName;
+            }, 2000);
+        } else {
+            alert("Database synchronization failure: " + response.data.message);
+            if (nameLabel) nameLabel.innerText = originalText;
+        }
+    } catch (error) {
+        console.error("Cloudinary deployment crash:", error);
+        alert("Failed to push image to storage cluster.");
+        if (nameLabel) nameLabel.innerText = originalText;
+    }
+}
+
+// =========================================================
+// 💾 SAVE COMPANY NAME HANDLER
+// =========================================================
+async function handleSaveCompanyName() {
+    var companyInput = document.getElementById('companyNameInput');
+    var companyLogo  = document.getElementById('companyLogo');
+    var nameLabel    = document.getElementById('companyName');
+
+    if (!companyInput) return;
+
+    var newName = companyInput.value.trim();
+    if (!newName) {
+        alert("Please enter a valid company name.");
+        return;
+    }
+
+    var currentLogoUrl = companyLogo ? companyLogo.src : "";
+
+    try {
+        var response = await axios.post('../routes/api.php?action=save_employer_profile', {
+            company_name: newName,
+            company_logo_url: currentLogoUrl,
+            website: ""
+        });
+
+        if (response.data.status === 'success') {
+            if (nameLabel) nameLabel.innerText = newName;
+            alert("Company name saved successfully!");
+        } else {
+            alert("Save failed: " + response.data.message);
+        }
+    } catch (error) {
+        console.error("Save company name error:", error);
+        alert("Could not save company name.");
+    }
+}
+
+// =========================================================
+// 🏢 PUBLISH JOB VACANCY HANDLER (POST)
+// =========================================================
+async function handleJobSubmission(event) {
+    event.preventDefault();
+
+    var jobTitleEl = document.getElementById('jobTitle');
+    var jobDescEl  = document.getElementById('jobDesc');
+    var jobLatEl   = document.getElementById('jobLat');
+    var jobLngEl   = document.getElementById('jobLng');
+
+    var title       = jobTitleEl   ? jobTitleEl.value   : '';
+    var description = jobDescEl    ? jobDescEl.value    : '';
+    var latitude    = jobLatEl     ? jobLatEl.value     : '';
+    var longitude   = jobLngEl     ? jobLngEl.value     : '';
+
+    if (!latitude || !longitude) {
+        alert("Error: You must pinpoint your business address location on the map.");
+        return;
+    }
+
+    try {
+        var response = await axios.post('../routes/api.php?action=publish_job', {
+            title:       title,
+            description: description,
+            latitude:    latitude,
+            longitude:   longitude
+        });
+
+        if (response.data.status === 'success') {
+            alert("Success: Vacancy active on map views!");
+
+            var jobForm = document.getElementById('jobForm');
+            if (jobForm) jobForm.reset();
+
+            if (selectedMarker && employerMap) {
+                employerMap.removeLayer(selectedMarker);
+                selectedMarker = null;
+            }
+
+            var coordDisplay = document.getElementById('coordDisplay');
+            if (coordDisplay) coordDisplay.innerText = "No location chosen";
+
+            loadEmployerDashboardData();
+        } else {
+            alert("Publishing rejected: " + response.data.message);
+        }
+    } catch (error) {
+        console.error("Network interface fault:", error);
+        alert("Could not push job metadata to endpoint.");
+    }
+}
+
+// =========================================================
+// 📥 LOAD ALL DASHBOARD METRICS (GET)
+// =========================================================
+async function loadEmployerDashboardData() {
+    try {
+        // --- 1. JOBS TABLE ---
+        var jobsResponse = await axios.get('../routes/api.php?action=get_employer_jobs');
+        var jobsTableBody = document.getElementById('jobsTableBody');
+
+        if (jobsResponse.data.status === 'success' && jobsTableBody) {
+            jobsTableBody.innerHTML = "";
+
+            if (jobsResponse.data.data.length === 0) {
+                jobsTableBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#888;'>No active vacancies published yet.</td></tr>";
+            } else {
+                jobsResponse.data.data.forEach(function(job) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        "<td><strong>" + job.title + "</strong></td>" +
+                        "<td>" + new Date(job.created_at).toLocaleDateString() + "</td>" +
+                        "<td>Lat: " + parseFloat(job.latitude).toFixed(4) + ", Lng: " + parseFloat(job.longitude).toFixed(4) + "</td>" +
+                        "<td>" +
+                            "<button onclick=\"deleteJobListing(" + job.id + ")\" style=\"background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;\">Delete</button>" +
+                        "</td>";
+                    jobsTableBody.appendChild(tr);
+                });
+            }
+        }
+
+        // --- 2. APPLICANTS TABLE ---
+        var appResponse = await axios.get('../routes/api.php?action=get_employer_applications');
+        var applicantsTableBody = document.getElementById('applicantsTableBody');
+
+        if (appResponse.data.status === 'success' && applicantsTableBody) {
+            applicantsTableBody.innerHTML = "";
+
+            if (appResponse.data.data.length === 0) {
+                applicantsTableBody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#888;'>No applications received yet.</td></tr>";
+            } else {
+                appResponse.data.data.forEach(function(app) {
+                    var tr = document.createElement('tr');
+
+                    // Status dropdown — maps to valid DB enum values
+                    var selectHtml =
+                        "<select onchange=\"updateStatus(" + app.application_id + ", this.value)\" style=\"padding:4px; font-size:11px; cursor:pointer;\">" +
+                            "<option value='pending'"     + (app.status === 'pending'     ? ' selected' : '') + ">⏳ Pending</option>" +
+                            "<option value='reviewed'"    + (app.status === 'reviewed'    ? ' selected' : '') + ">📋 Reviewed</option>" +
+                            "<option value='accepted'"    + (app.status === 'accepted'    ? ' selected' : '') + ">✅ Accepted</option>" +
+                            "<option value='rejected'"    + (app.status === 'rejected'    ? ' selected' : '') + ">❌ Rejected</option>" +
+                        "</select>";
+
+                    tr.innerHTML =
+                        "<td><strong>" + (app.applicant_name ? app.applicant_name : 'Candidate Profile') + "</strong></td>" +
+                        "<td>" + app.job_title + "</td>" +
+                        "<td><a href='" + app.resume_url + "' target='_blank' style='color:blue; text-decoration:underline;'>Open Document</a></td>" +
+                        "<td><span class='status-pill status-" + app.status + "'>" + app.status.toUpperCase() + "</span></td>" +
+                        "<td>" + selectHtml + "</td>";
+
+                    applicantsTableBody.appendChild(tr);
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Error loading dashboard data streams:", error);
+    }
+}
+
+// =========================================================
+// 🔄 UPDATE APPLICATION STATUS (POST)
+// =========================================================
+async function updateStatus(applicationId, newStatus) {
+    try {
+        var response = await axios.post('../routes/api.php?action=update_application_status', {
+            application_id: applicationId,
+            status: newStatus
+        });
+        if (response.data.status === 'success') {
+            loadEmployerDashboardData();
+        } else {
+            alert("Failed to save tracking change: " + response.data.message);
+        }
+    } catch (err) {
+        console.error("Status update error:", err);
+    }
+}
+
+// =========================================================
+// 🗑️ DELETE JOB LISTING (POST)
+// =========================================================
 async function deleteJobListing(jobId) {
-    // Show a clean native browser verification box to prevent accidents
-    const userConfirmed = confirm("Are you absolute sure you want to permanently delete this job post? This action cannot be undone.");
+    var userConfirmed = confirm("Are you sure you want to permanently delete this job post? This cannot be undone.");
     if (!userConfirmed) return;
 
     try {
-        const response = await axios.post('../routes/api.php?action=delete_job', {
+        var response = await axios.post('../routes/api.php?action=delete_job', {
             job_id: jobId
         });
 
         if (response.data.status === 'success') {
             alert("Vacancy deleted successfully.");
-            // Refresh both tables seamlessly without page refresh flicker!
             loadEmployerDashboardData();
         } else {
             alert("Failed to delete entry: " + response.data.message);
         }
     } catch (error) {
         console.error("Deletion pipeline failure:", error);
-        alert("Could not process record destruction request.");
+        alert("Could not process record deletion.");
     }
 }
+
+// =========================================================
+// 🚀 ENGINE LAUNCH ON DOM READY
+// =========================================================
+document.addEventListener("DOMContentLoaded", function() {
+    initializeTabSwitchingEngine();
+    initEmployerMap();
+    loadEmployerDashboardData();
+
+    var jobForm = document.getElementById('jobForm');
+    if (jobForm) {
+        jobForm.addEventListener('submit', handleJobSubmission);
+    }
+
+    var fileInput = document.getElementById('logoFileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleLogoChange);
+    }
+
+    var saveNameBtn = document.getElementById('saveNameBtn');
+    if (saveNameBtn) {
+        saveNameBtn.addEventListener('click', handleSaveCompanyName);
+    }
+});
