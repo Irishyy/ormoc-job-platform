@@ -43,6 +43,25 @@
             cursor: pointer; 
         }
 
+        /* Company Name Input Row */
+        .company-name-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        .company-name-row input {
+            width: 140px;
+            padding: 6px 8px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        .company-name-row button {
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
         /* Sidebar Navigation List Spacing */
         .sidebar-menu ul { 
             list-style: none; 
@@ -107,6 +126,11 @@
             <img id="companyLogo" src="https://placehold.co/120" alt="Logo" onclick="document.getElementById('logoFileInput').click();" />
             <h3 id="companyName" style="margin-top: 10px; font-size: 16px;">Loading Entity...</h3>
             <input type="file" id="logoFileInput" accept="image/*" style="display: none;" />
+
+            <div class="company-name-row">
+                <input type="text" id="companyNameInput" placeholder="Company name..." />
+                <button id="saveNameBtn">Save</button>
+            </div>
         </div>
 
         <nav class="sidebar-menu">
@@ -119,6 +143,9 @@
                 </li>
                 <li>
                     <a href="#" class="nav-tab" data-target="panel-review-applicants">👥 Review Applicants</a>
+                </li>
+                <li style="margin-top: 40px; border-top: 1px solid #ccc; padding-top: 15px;">
+                    <a href="/ormoc-job-platform/routes/logout.php" style="font-weight: bold;">🚪 Sign Out Account</a>
                 </li>
             </ul>
         </nav>
