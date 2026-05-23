@@ -1,5 +1,4 @@
-<?php
-// models/JobModel.php
+<!-- <?php
 
 class JobModel {
 
@@ -191,4 +190,111 @@ class JobModel {
     return false;
   }
 
+  // Inside models/JobModel.php
+
+    // 1. Record a new applicant file submission tracking line
+// Inside models/JobModel.php
+
+  // 1. Record a new applicant file submission tracking line
+  public function createApplication($jobId, $userId, $resumeUrl) {
+    $jobId = (int) $jobId;
+    $userId = (int) $userId;
+    $safeUrl = $this->conn->real_escape_string($resumeUrl);
+    
+    // 🔥 FIXED: Matches your table fields exactly
+    $sql = "INSERT INTO applications (job_id, seeker_id, resume_url, status) 
+            VALUES ($jobId, $userId, '$safeUrl', 'pending')";
+            
+    return $this->conn->query($sql);
+  }
+
+  // 2. Gather application history logs for a specific seeker profile
+  public function getApplicationsBySeeker($userId) {
+    $userId = (int) $userId;
+    
+    // 🔥 FIXED: Changed a.created_at to a.applied_at to match your schema fields
+    $sql = "SELECT a.status, a.applied_at, j.title AS job_title, e.company_name 
+            FROM applications a
+            JOIN jobs j ON a.job_id = j.id
+            LEFT JOIN employers e ON j.user_id = e.user_id
+            WHERE a.seeker_id = $userId
+            ORDER BY a.id DESC";
+            
+    $result = $this->conn->query($sql);
+    
+    $apps = [];
+    while ($row = $result->fetch_assoc()) {
+        $apps[] = $row;
+    }
+    return $apps;
+  }
+
+public function getApplicationsByEmployer($employerId) {
+    $employerId = (int) $employerId;
+    
+    // Test alternative: If your 'jobs' table uses 'user_id' directly instead of 'employer_id', 
+    // change `j.employer_id` to `j.user_id` below.
+    $sql = "SELECT 
+              a.id AS application_id,
+              a.status,
+              a.resume_url,
+              a.applied_at,
+              j.title AS job_title,
+              u.name AS applicant_name
+            FROM applications a
+            INNER JOIN jobs j ON a.job_id = j.id
+            LEFT JOIN users u ON a.seeker_id = u.id
+            WHERE j.employer_id = $employerId 
+               OR j.user_id = $employerId
+            ORDER BY a.id DESC";
+            
+    $result = $this->conn->query($sql);
+    
+    $intakeList = [];
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $intakeList[] = $row;
+        }
+    }
+    return $intakeList;
 }
+
+  // Update a candidate's status track in the pipeline
+  public function updateApplicationStatus($applicationId, $newStatus) {
+    $applicationId = (int) $applicationId;
+    $safeStatus = $this->conn->real_escape_string($newStatus);
+    
+    $sql = "UPDATE applications 
+            SET status = '$safeStatus' 
+            WHERE id = $applicationId";
+            
+    return $this->conn->query($sql);
+  }
+
+  public function getSeekerApplications($seekerId) {
+    $seekerId = (int) $seekerId;
+    
+    // Ensure all joined matching tables exist exactly like this in your DB
+    $sql = "SELECT 
+              a.id AS application_id,
+              a.status, 
+              a.applied_at, 
+              j.title AS job_title, 
+              e.company_name 
+            FROM applications a
+            INNER JOIN jobs j ON a.job_id = j.id
+            LEFT JOIN employers e ON j.user_id = e.user_id
+            WHERE a.seeker_id = $seekerId
+            ORDER BY a.id DESC";
+            
+    $result = $this->conn->query($sql);
+    
+    $apps = [];
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $apps[] = $row;
+        }
+    }
+    return $apps;
+  }
+} 
