@@ -8,10 +8,6 @@ class DatabaseConnection {
 
   public $google_client_id = "457247832144-vos0rhcnost6rau41c29iaejba4i9981.apps.googleusercontent.com";
 
-  public $cloudinary_name = "dxrvbwycv";
-  public $cloudinary_key = "136243957311944";
-  public $cloudinary_secret = "VEdob8MAKYL9C6JQE_j58q-q1n8";
-
   public $conn;
 
   public function connect()
