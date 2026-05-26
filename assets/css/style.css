@@ -56,6 +56,14 @@ h2 {
 /* ==========================================================================
    🔑 PORTAL ACCESS GATEWAY (login.php)
    ========================================================================== */
+.login-top-logos {
+  display: flex;
+  margin: 2rem 0 2rem 0;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
 .login-body-wrapper {
     display: flex;
     justify-content: center;

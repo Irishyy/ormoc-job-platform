@@ -23,11 +23,6 @@
   </div>
 
   <div class="login-body-wrapper">
-<<<<<<< HEAD
-=======
-    
-    
->>>>>>> 344b2991fd1404c4b197cd3d915c2c32fe6b433c
     <div class="login-container">
       <h2>Welcome to Ormoc Job Matching Platform</h2>
       
@@ -41,7 +36,6 @@
       
       <h3>Manual Login / Sign Up</h3>
       <div>
-<<<<<<< HEAD
         <label>Name (Only required for Sign Up):</label><br>
         <input type="text" id="manual_name" placeholder="John Doe"><br><br>
 
@@ -50,16 +44,6 @@
 
         <label>Password:</label><br>
         <input type="password" id="manual_password" placeholder="******"><br><br>
-=======
-        <label>Name (Only required for Sign Up):</label>
-        <input type="text" id="manual_name" placeholder="John Doe">
-
-        <label>Email Address:</label>
-        <input type="email" id="manual_email" placeholder="example@gmail.com">
-
-        <label>Password:</label>
-        <input type="password" id="manual_password" placeholder="******">
->>>>>>> 344b2991fd1404c4b197cd3d915c2c32fe6b433c
 
         <button onclick="handleManualLogin()">Log In</button>
         <button onclick="handleManualSignUp()">Sign Up</button>
@@ -70,14 +54,9 @@
       <h3>Or Use Single Sign-On</h3>
       <div id="googleSignInButton"></div>
     </div>
-<<<<<<< HEAD
   </div>
   
 
   <script src="../assets/js/auth.js"></script>
-=======
-
-  </div> <script src="../assets/js/auth.js"></script>
->>>>>>> 344b2991fd1404c4b197cd3d915c2c32fe6b433c
 </body>
 </html>
