@@ -1,8 +1,12 @@
 // assets/js/auth.js
+// Handles everything on the login page:
+//   - Google Sign-In button setup
+//   - Manual login
+//   - Manual sign-up
 
-// =========================================================
-// 🔐 GOOGLE SIGN-IN INITIALIZATION
-// =========================================================
+// ─── Google Sign-In ───────────────────────────────────────
+
+// Wait for the Google library to load, then render the sign-in button.
 function initGoogleSignIn() {
     if (!window.google || !google.accounts || !google.accounts.id) {
         setTimeout(initGoogleSignIn, 100);
@@ -13,9 +17,8 @@ function initGoogleSignIn() {
 
     google.accounts.id.initialize({
         client_id: clientId,
-        callback: handleCredentialResponse,
-        ux_mode: "popup",
-        use_fedcm_for_prompt: false
+        callback: handleGoogleResponse,
+        ux_mode: "popup"
     });
 
     google.accounts.id.renderButton(
@@ -24,163 +27,112 @@ function initGoogleSignIn() {
     );
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    initGoogleSignIn();
-});
-
-// =========================================================
-// 🔧 SAFE RESPONSE PARSER
-// Extracts a clean JSON object even if PHP printed warnings
-// before the json_encode() output.
-// =========================================================
-function parseApiResponse(rawData) {
-    // If Axios already parsed it as an object, return it directly
-    if (rawData && typeof rawData === "object") {
-        return rawData;
-    }
-
-    // PHP sometimes prepends notices/warnings to the JSON string.
-    // Find the first '{' and parse from there.
-    if (typeof rawData === "string") {
-        var jsonStart = rawData.indexOf('{');
-        if (jsonStart !== -1) {
-            try {
-                return JSON.parse(rawData.substring(jsonStart));
-            } catch (e) {
-                console.error("JSON parse failed after trimming PHP output:", e);
-                console.error("Raw response was:", rawData);
-            }
-        }
-    }
-
-    return null;
-}
-
-// =========================================================
-// 🌐 GOOGLE OAUTH HANDLER
-// =========================================================
-async function handleCredentialResponse(response) {
-    var selectedRole = document.getElementById("user_role").value;
-    var googleToken  = response.credential;
+// Called by Google after the user picks their account.
+async function handleGoogleResponse(response) {
+    var role = document.getElementById("user_role").value;
 
     try {
-        var res = await axios.post('/ormoc-job-platform/routes/api.php?action=oauth_login', {
-            credential: googleToken,
-            role: selectedRole
+        var res  = await axios.post("/ormoc-job-platform/routes/api.php?action=oauth_login", {
+            credential: response.credential,
+            role: role
         });
 
-        var data = parseApiResponse(res.data);
+        var data = res.data;
 
-        if (!data) {
-            console.error("Unparseable server response:", res.data);
-            alert("Server returned an unexpected response. Check the browser console for details.");
-            return;
-        }
-
-        if (data.status === 'success') {
-            if (data.role === 'employer') {
-                window.location.href = '/ormoc-job-platform/views/employer_dash.php';
-            } else {
-                window.location.href = '/ormoc-job-platform/views/seeker_dash.php';
-            }
+        if (data.status === "success") {
+            goToDashboard(data.role);
         } else {
             alert(data.message || "Google login failed.");
         }
     } catch (err) {
-        console.error("OAuth Error:", err);
-        if (err.response) {
-            console.error("Server responded with:", err.response.data);
-        }
+        console.error("Google login error:", err);
         alert("Google login failed. Please try again.");
     }
 }
 
-// =========================================================
-// 🔑 MANUAL LOGIN HANDLER
-// =========================================================
-async function handleManualLogin() {
-    var selectedRole   = document.getElementById("user_role").value;
-    var emailInput     = document.getElementById("manual_email").value.trim();
-    var passwordInput  = document.getElementById("manual_password").value;
 
-    if (!emailInput || !passwordInput) {
+// ─── Manual Login ─────────────────────────────────────────
+
+async function handleManualLogin() {
+    var role = document.getElementById("user_role").value;
+    var email = document.getElementById("manual_email").value.trim();
+    var password = document.getElementById("manual_password").value;
+
+    if (!email || !password) {
         alert("Please enter your email and password.");
         return;
     }
 
     try {
-        var res = await axios.post('/ormoc-job-platform/routes/api.php?action=manual_login', {
-            email:    emailInput,
-            password: passwordInput,
-            role:     selectedRole
+        var res = await axios.post("/ormoc-job-platform/routes/api.php?action=manual_login", {
+            email: email,
+            password: password,
+            role: role
         });
 
-        var data = parseApiResponse(res.data);
+        var data = res.data;
 
-        if (!data) {
-            console.error("Unparseable server response:", res.data);
-            alert("Server returned an unexpected response. Check the browser console for details.");
-            return;
-        }
-
-        if (data.status === 'success') {
-            if (data.role === 'employer') {
-                window.location.href = '/ormoc-job-platform/views/employer_dash.php';
-            } else {
-                window.location.href = '/ormoc-job-platform/views/seeker_dash.php';
-            }
+        if (data.status === "success") {
+            goToDashboard(data.role);
         } else {
-            alert(data.message || "Login failed. Please check your credentials.");
+            alert(data.message || "Login failed. Check your credentials.");
         }
     } catch (err) {
-        console.error("Login Error:", err);
-        if (err.response) {
-            console.error("Server responded with:", err.response.data);
-        }
+        console.error("Login error:", err);
         alert("Login request failed. Please try again.");
     }
 }
 
-// =========================================================
-// 📝 MANUAL SIGN UP HANDLER
-// =========================================================
-async function handleManualSignUp() {
-    var selectedRole  = document.getElementById("user_role").value;
-    var nameInput     = document.getElementById("manual_name").value.trim();
-    var emailInput    = document.getElementById("manual_email").value.trim();
-    var passwordInput = document.getElementById("manual_password").value;
 
-    if (!nameInput || !emailInput || !passwordInput) {
-        alert("Please fill in your name, email, and password to sign up.");
+// ─── Manual Sign-Up ───────────────────────────────────────
+
+async function handleManualSignUp() {
+    var role = document.getElementById("user_role").value;
+    var name = document.getElementById("manual_name").value.trim();
+    var email    = document.getElementById("manual_email").value.trim();
+    var password = document.getElementById("manual_password").value;
+
+    if (!name || !email || !password) {
+        alert("Please fill in your name, email, and password.");
         return;
     }
 
     try {
-        var res = await axios.post('/ormoc-job-platform/routes/api.php?action=manual_signup', {
-            name:     nameInput,
-            email:    emailInput,
-            password: passwordInput,
-            role:     selectedRole
+        var res  = await axios.post("/ormoc-job-platform/routes/api.php?action=manual_signup", {
+            name: name,
+            email: email,
+            password: password,
+            role: role
         });
 
-        var data = parseApiResponse(res.data);
+        var data = res.data;
 
-        if (!data) {
-            console.error("Unparseable server response:", res.data);
-            alert("Server returned an unexpected response. Check the browser console for details.");
-            return;
-        }
-
-        if (data.status === 'success') {
+        if (data.status === "success") {
             alert(data.message || "Registration successful! You can now log in.");
         } else {
             alert(data.message || "Sign up failed. Please try again.");
         }
     } catch (err) {
-        console.error("SignUp Error:", err);
-        if (err.response) {
-            console.error("Server responded with:", err.response.data);
-        }
+        console.error("Sign up error:", err);
         alert("Sign up request failed. Please try again.");
     }
 }
+
+
+// ─── Helper ───────────────────────────────────────────────
+
+// Redirect to the correct dashboard based on the user's role.
+function goToDashboard(role) {
+    if (role === "employer") {
+        window.location.href = "/ormoc-job-platform/views/employer_dash.php";
+    } else {
+        window.location.href = "/ormoc-job-platform/views/seeker_dash.php";
+    }
+}
+
+
+// ─── Boot ─────────────────────────────────────────────────
+
+document.addEventListener("DOMContentLoaded", function() {
+    initGoogleSignIn();
+});
