@@ -1,259 +1,164 @@
 // assets/js/jobs.js
+// Powers the job seeker dashboard:
+//   - Map showing all job pins
+//   - Clicking a pin to see job details
+//   - Submitting an application with a resume upload
+//   - Viewing submitted applications
 
-let seekerMap;
-let currentSelectedJobId = null;
+var seekerMap          = null;
+var currentJobId       = null;
 
-// =========================================================
-// 🚀 DOM ELEMENT CACHE LAYER
-// =========================================================
-const mapContainer       = document.getElementById('map');
-const seekerNameEl       = document.getElementById('seekerName');
-const seekerNameInput    = document.getElementById('seekerNameInput');
-const saveNameBtn        = document.getElementById('saveNameBtn');
-const tabExploreLink     = document.getElementById('tab-explore');
-const tabTracksLink      = document.getElementById('tab-tracks');
-const panelExploreMap    = document.getElementById('panel-explore-map');
-const panelMyApplications = document.getElementById('panel-my-applications');
-const activeJobContent   = document.getElementById('activeJobContent');
-const displayJobTitle    = document.getElementById('displayJobTitle');
-const displayJobDesc     = document.getElementById('displayJobDesc');
-const applyJobIdInput    = document.getElementById('applyJobId');
-const applyForm          = document.getElementById('applyForm');
-const resumeFileInput    = document.getElementById('resumeFileInput');
-const submitAppBtn       = document.getElementById('submitAppBtn');
-const appTableBody       = document.getElementById('seekerApplicationsTableBody');
 
-// =========================================================
-// 🗺️ MAP INITIALIZATION
-// =========================================================
-if (mapContainer) {
-    seekerMap = L.map('map').setView([11.0050, 124.6050], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+// ─── Map Setup ────────────────────────────────────────────
+
+function initMap() {
+    seekerMap = L.map("map").setView([11.0050, 124.6050], 13);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(seekerMap);
 
-    // Force Leaflet to recalculate map container size
-    setTimeout(function() {
-        seekerMap.invalidateSize();
-    }, 200);
+    setTimeout(function() { seekerMap.invalidateSize(); }, 200);
 }
 
-// =========================================================
-// 🗂️ TAB SINGLE-PAGE SWITCHING ROUTINES
-// =========================================================
-if (tabExploreLink) {
-    tabExploreLink.onclick = function(e) {
+
+// ─── Tab Switching ────────────────────────────────────────
+
+function initTabs() {
+    document.getElementById("tab-explore").addEventListener("click", function(e) {
         e.preventDefault();
-        if (panelExploreMap) {
-            panelExploreMap.style.display = "block";
-        }
-        if (panelMyApplications) {
-            panelMyApplications.style.display = "none";
-        }
-        if (seekerMap) {
-            setTimeout(function() {
-                seekerMap.invalidateSize();
-            }, 50);
-        }
-    };
-}
+        document.getElementById("panel-explore-map").style.display  = "block";
+        document.getElementById("panel-my-applications").style.display = "none";
+        setTimeout(function() { seekerMap.invalidateSize(); }, 50);
+    });
 
-if (tabTracksLink) {
-    tabTracksLink.onclick = async function(e) {
+    document.getElementById("tab-tracks").addEventListener("click", async function(e) {
         e.preventDefault();
-        if (panelExploreMap) {
-            panelExploreMap.style.display = "none";
-        }
-        if (panelMyApplications) {
-            panelMyApplications.style.display = "block";
-        }
-
-        try {
-            var appResponse = await axios.get('../routes/api.php?action=get_seeker_applications');
-            if (appResponse.data && appResponse.data.data) {
-                renderApplicationsTable(appResponse.data.data);
-            } else {
-                renderApplicationsTable([]);
-            }
-        } catch (err) {
-            console.log("Failed to refresh application tracking lines:", err);
-        }
-    };
+        document.getElementById("panel-explore-map").style.display     = "none";
+        document.getElementById("panel-my-applications").style.display = "block";
+        await loadMyApplications();
+    });
 }
 
-// =========================================================
-// 💾 SAVE SEEKER NAME HANDLER
-// =========================================================
-if (saveNameBtn) {
-    saveNameBtn.onclick = function() {
-        if (!seekerNameInput) return;
-        var newName = seekerNameInput.value.trim();
-        if (!newName) {
-            alert("Please enter a valid name.");
-            return;
-        }
-        if (seekerNameEl) {
-            seekerNameEl.innerText = newName;
-        }
-        alert("Display name updated locally!");
-    };
-}
 
-// =========================================================
-// 📥 DATA FETCH ENGINE
-// =========================================================
-async function loadSeekerDashboardData() {
-    if (seekerNameEl) {
-        seekerNameEl.innerText = "Active Candidate";
-    }
+// ─── Load All Jobs onto Map ───────────────────────────────
 
+async function loadJobs() {
     try {
-        // 1. Fetch all job listings
-        var jobsResponse = await axios.get('../routes/api.php?action=get_all_jobs');
-        var jobsList = [];
+        var res  = await axios.get("../routes/api.php?action=get_all_jobs");
+        var jobs = res.data.data || [];
 
-        if (jobsResponse.data && jobsResponse.data.data) {
-            jobsList = jobsResponse.data.data;
-        }
+        jobs.forEach(function(job) {
+            if (!job.latitude || !job.longitude) return;
 
-        // Plot map pin markers manually
-        for (var i = 0; i < jobsList.length; i++) {
-            var job = jobsList[i];
+            var marker = L.marker([parseFloat(job.latitude), parseFloat(job.longitude)]).addTo(seekerMap);
 
-            if (job.latitude && job.longitude && seekerMap) {
-                var lat = parseFloat(job.latitude);
-                var lng = parseFloat(job.longitude);
-                var marker = L.marker([lat, lng]).addTo(seekerMap);
-
-                // Wrap in IIFE to preserve job reference inside async loop
-                (function(capturedJob) {
-                    marker.on('click', function() {
-                        currentSelectedJobId = capturedJob.id;
-
-                        if (displayJobTitle) {
-                            displayJobTitle.innerText = capturedJob.title;
-                        }
-                        if (displayJobDesc) {
-                            displayJobDesc.innerText = capturedJob.description;
-                        }
-                        if (applyJobIdInput) {
-                            applyJobIdInput.value = capturedJob.id;
-                        }
-                        if (activeJobContent) {
-                            activeJobContent.style.display = "block";
-                        }
-                    });
-                })(job);
-            }
-        }
-
-        // 2. Fetch and render seeker's own applications
-        var appResponse = await axios.get('../routes/api.php?action=get_seeker_applications');
-        if (appResponse.data && appResponse.data.data) {
-            renderApplicationsTable(appResponse.data.data);
-        } else {
-            renderApplicationsTable([]);
-        }
+            marker.on("click", function() {
+                showJobDetails(job);
+            });
+        });
 
     } catch (err) {
-        console.log("Data loading failed:", err);
+        console.error("Load jobs error:", err);
+    }
+}
+
+// Show a job's details in the side panel when a pin is clicked
+function showJobDetails(job) {
+    currentJobId = job.id;
+
+    document.getElementById("displayJobTitle").innerText = job.title;
+    document.getElementById("displayJobDesc").innerText  = job.description;
+    document.getElementById("applyJobId").value          = job.id;
+    document.getElementById("activeJobContent").style.display = "block";
+}
+
+
+// ─── Submit an Application ────────────────────────────────
+
+async function handleApplySubmit(event) {
+    event.preventDefault();
+
+    var fileInput = document.getElementById("resumeFileInput");
+    var file = fileInput.files[0];
+
+    if (!file || !currentJobId) {
+        alert("Please select a job pin and attach your resume.");
+        return;
+    }
+
+    var submitBtn = document.getElementById("submitAppBtn");
+    submitBtn.innerText = "Uploading...";
+    submitBtn.disabled  = true;
+
+    try {
+        var resumeUrl = await uploadMediaFile(file, "candidate_resumes");
+
+        var res = await axios.post("../routes/api.php?action=apply_to_job", {
+            job_id:    currentJobId,
+            resume_url: resumeUrl
+        });
+
+        if (res.data.status === "success") {
+            alert("Application submitted!");
+            fileInput.value = "";
+            document.getElementById("activeJobContent").style.display = "none";
+            await loadMyApplications();
+        } else {
+            alert("Failed: " + res.data.message);
+        }
+    } catch (err) {
+        console.error("Apply error:", err);
+        alert("Could not submit your application. Please try again.");
+    } finally {
+        submitBtn.innerText = "Submit Application";
+        submitBtn.disabled  = false;
+    }
+}
+
+
+// ─── Load My Applications Table ───────────────────────────
+
+async function loadMyApplications() {
+    try {
+        var res  = await axios.get("../routes/api.php?action=get_seeker_applications");
+        var apps = (res.data && res.data.data) ? res.data.data : [];
+        renderApplicationsTable(apps);
+    } catch (err) {
+        console.error("Load applications error:", err);
         renderApplicationsTable([]);
     }
 }
 
-// =========================================================
-// 📤 APPLY FORM SUBMISSION ENGINE
-// =========================================================
-if (applyForm) {
-    applyForm.onsubmit = async function(e) {
-        e.preventDefault();
+function renderApplicationsTable(apps) {
+    var body = document.getElementById("seekerApplicationsTableBody");
+    if (!body) return;
 
-        if (!resumeFileInput) return;
-        var targetFile = resumeFileInput.files[0];
-
-        if (!targetFile || !currentSelectedJobId) {
-            alert("Please select a job and attach your resume.");
-            return;
-        }
-
-        if (submitAppBtn) {
-            submitAppBtn.innerText = "Uploading resume...";
-        }
-
-        try {
-            // Upload resume file to Cloudinary storage
-            var secureResumeUrl = await uploadMediaFile(targetFile, 'candidate_resumes');
-
-            var payload = {
-                job_id: currentSelectedJobId,
-                resume_url: secureResumeUrl
-            };
-
-            var response = await axios.post('../routes/api.php?action=apply_to_job', payload);
-
-            if (response.data.status === 'success') {
-                alert("Application transmitted successfully!");
-                resumeFileInput.value = "";
-
-                if (activeJobContent) {
-                    activeJobContent.style.display = "none";
-                }
-
-                // Reload seeker's application list
-                var reloadResponse = await axios.get('../routes/api.php?action=get_seeker_applications');
-                if (reloadResponse.data && reloadResponse.data.data) {
-                    renderApplicationsTable(reloadResponse.data.data);
-                } else {
-                    renderApplicationsTable([]);
-                }
-            } else {
-                alert("Failed: " + response.data.message);
-            }
-
-        } catch (err) {
-            console.log("Transmission error:", err);
-            alert("Could not submit application. Please try again.");
-        } finally {
-            if (submitAppBtn) {
-                submitAppBtn.innerText = "Submit Application Packet";
-            }
-        }
-    };
-}
-
-// =========================================================
-// 🧱 TABLE RENDER ENGINE
-// =========================================================
-function renderApplicationsTable(applications) {
-    if (!appTableBody) return;
-
-    if (!applications || applications.length === 0) {
-        appTableBody.innerHTML = "<tr><td colspan='4' style='text-align: center;'>No applications submitted yet.</td></tr>";
+    if (apps.length === 0) {
+        body.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No applications submitted yet.</td></tr>";
         return;
     }
 
-    var rowsHtml = "";
-    for (var i = 0; i < applications.length; i++) {
-        var app = applications[i];
-
-        var companyDisplay = app.company_name ? app.company_name : 'Corporate Entity';
-        var titleDisplay   = app.title ? app.title : (app.job_title ? app.job_title : 'Unknown Position');
-        var dateDisplay    = app.applied_at ? app.applied_at : 'Just Now';
-        var statusDisplay  = app.status ? app.status.toUpperCase() : 'PENDING';
-
-        rowsHtml += "<tr>" +
-            "<td>" + companyDisplay + "</td>" +
-            "<td>" + titleDisplay + "</td>" +
-            "<td>" + dateDisplay + "</td>" +
-            "<td><strong>" + statusDisplay + "</strong></td>" +
+    body.innerHTML = apps.map(function(app) {
+        return "<tr>" +
+            "<td>" + (app.company_name || "Unknown Company") + "</td>" +
+            "<td>" + (app.job_title    || "Unknown Position") + "</td>" +
+            "<td>" + (app.applied_at   || "Just now") + "</td>" +
+            "<td><strong>" + (app.status || "pending").toUpperCase() + "</strong></td>" +
         "</tr>";
-    }
-
-    appTableBody.innerHTML = rowsHtml;
+    }).join("");
 }
 
-// =========================================================
-// 🚀 BOOT ON PAGE LOAD
-// =========================================================
-loadSeekerDashboardData();
+
+// ─── Boot ─────────────────────────────────────────────────
+
+document.addEventListener("DOMContentLoaded", async function() {
+    initMap();
+    initTabs();
+
+    document.getElementById("applyForm").addEventListener("submit", handleApplySubmit);
+
+    await loadJobs();
+    await loadMyApplications();
+});
