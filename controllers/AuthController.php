@@ -1,160 +1,137 @@
 <?php
 // controllers/AuthController.php
+// This file handles login and sign-up for both Google and manual accounts.
 
 require_once __DIR__ . "/../config/DatabaseConnection.php";
 require_once __DIR__ . "/../models/UserModel.php";
 
 class AuthController {
 
-    // =========================================================
-    // 🌐 GOOGLE OAUTH LOGIN
-    // =========================================================
+    // -----------------------------------------------------------
+    // Google Sign-In
+    // Google sends us a "credential" token. We verify it with Google,
+    // get the user's name and email, then log them in (or create an account).
+    // -----------------------------------------------------------
     public function handleGoogleLogin($data) {
-        $dbObj = new DatabaseConnection();
-        $db    = $dbObj->connect();
+        $db        = (new DatabaseConnection())->connect();
         $userModel = new UserModel($db);
 
+        // Make sure we received the Google token
         if (empty($data["credential"])) {
-            echo json_encode(["status" => "error", "message" => "Google token is required."]);
+            echo json_encode(["status" => "error", "message" => "No Google token received."]);
             return;
         }
 
-        $role = isset($data["role"]) ? $data["role"] : "seeker";
+        $role = $data["role"] ?? "seeker";
 
-        if ($role !== "seeker" && $role !== "employer") {
-            echo json_encode(["status" => "error", "message" => "Role must be seeker or employer."]);
-            return;
-        }
+        // Ask Google to verify the token and give us the user's info
+        $googleUrl      = "https://oauth2.googleapis.com/tokeninfo?id_token=" . urlencode($data["credential"]);
+        $googleResponse = file_get_contents($googleUrl);
 
-        $verifyUrl      = "https://oauth2.googleapis.com/tokeninfo?id_token=" . urlencode($data["credential"]);
-        $googleResponse = file_get_contents($verifyUrl);
-
-        if ($googleResponse === false) {
-            echo json_encode(["status" => "error", "message" => "Could not verify Google token."]);
+        if (!$googleResponse) {
+            echo json_encode(["status" => "error", "message" => "Could not reach Google to verify the token."]);
             return;
         }
 
         $googleData = json_decode($googleResponse, true);
 
-        if (!$googleData || isset($googleData["error_description"])) {
-            echo json_encode(["status" => "error", "message" => "Invalid Google token."]);
-            return;
-        }
-
-        if ($googleData["aud"] !== $dbObj->google_client_id) {
-            echo json_encode(["status" => "error", "message" => "Google client ID does not match."]);
+        // Make sure the token is valid and meant for our app
+        $dbConfig = new DatabaseConnection();
+        if (!$googleData || ($googleData["aud"] ?? "") !== $dbConfig->getGoogleClientId()) {
+            echo json_encode(["status" => "error", "message" => "Google token is invalid or expired."]);
             return;
         }
 
         $email = $googleData["email"];
         $name  = $googleData["name"];
 
+        // Check if this person already has an account
         $user = $userModel->findByEmail($email);
 
+        // If they don't have an account yet, create one
         if (!$user) {
-            $newUserId = $userModel->createManual($name, $email, "OAUTH_GOOGLE_ACCOUNT", $role);
-
-            if (!$newUserId) {
-                echo json_encode(["status" => "error", "message" => "Failed to register Google user."]);
-                return;
-            }
+            $newUserId = $userModel->createUser($name, $email, "GOOGLE_OAUTH", $role);
 
             if ($role === "employer") {
-                $saved = $userModel->createEmployer($newUserId);
+                $userModel->createEmployer($newUserId);
             } else {
-                $saved = $userModel->createJobSeeker($newUserId);
-            }
-
-            if (!$saved) {
-                echo json_encode(["status" => "error", "message" => "User saved but profile setup failed."]);
-                return;
+                $userModel->createJobSeeker($newUserId);
             }
 
             $user = $userModel->findByEmail($email);
         }
 
+        // Save the user info in the session so they stay logged in
         $_SESSION["user_id"]   = $user["id"];
         $_SESSION["user_role"] = $user["role"];
 
         echo json_encode(["status" => "success", "role" => $user["role"]]);
     }
 
-    // =========================================================
-    // 📝 MANUAL SIGN UP
-    // =========================================================
+    // -----------------------------------------------------------
+    // Manual Sign-Up
+    // The user fills in their name, email, and password to create an account.
+    // -----------------------------------------------------------
     public function handleManualSignUp($data) {
-        // Validate all required fields are present and non-empty
         if (empty($data["name"]) || empty($data["email"]) || empty($data["password"]) || empty($data["role"])) {
-            echo json_encode(["status" => "error", "message" => "Name, email, password, and role are required."]);
+            echo json_encode(["status" => "error", "message" => "Please fill in all fields: name, email, password, and role."]);
             return;
         }
 
-        if ($data["role"] !== "seeker" && $data["role"] !== "employer") {
-            echo json_encode(["status" => "error", "message" => "Role must be seeker or employer."]);
-            return;
-        }
-
-        $dbObj     = new DatabaseConnection();
-        $db        = $dbObj->connect();
+        $db  = (new DatabaseConnection())->connect();
         $userModel = new UserModel($db);
 
-        // Check if the email address is already taken
-        $existingUser = $userModel->findByEmail($data["email"]);
-        if ($existingUser) {
-            echo json_encode(["status" => "error", "message" => "Email already registered. Please log in instead."]);
+        // Check if someone already registered with this email
+        if ($userModel->findByEmail($data["email"])) {
+            echo json_encode(["status" => "error", "message" => "That email is already registered. Try logging in instead."]);
             return;
         }
 
-        // Hash the password securely before storing
+        // Hash the password so we never store it in plain text
         $hashedPassword = password_hash($data["password"], PASSWORD_DEFAULT);
 
-        // Write the base user record
-        $newUserId = $userModel->createManual($data["name"], $data["email"], $hashedPassword, $data["role"]);
+        // Create the user account
+        $newUserId = $userModel->createUser($data["name"], $data["email"], $hashedPassword, $data["role"]);
 
         if (!$newUserId) {
-            echo json_encode(["status" => "error", "message" => "Database write error. Could not create user record."]);
+            echo json_encode(["status" => "error", "message" => "Something went wrong creating your account. Try again."]);
             return;
         }
 
-        // Write the role-specific sub-profile record
+        // Create the matching profile row (employer or seeker)
         if ($data["role"] === "employer") {
-            $saved = $userModel->createEmployer($newUserId);
+            $userModel->createEmployer($newUserId);
         } else {
-            $saved = $userModel->createJobSeeker($newUserId);
+            $userModel->createJobSeeker($newUserId);
         }
 
-        if ($saved) {
-            echo json_encode(["status" => "success", "message" => "Registration successful! You can now log in."]);
-        } else {
-            echo json_encode(["status" => "error", "message" => "User created but sub-profile setup failed. Contact support."]);
-        }
+        echo json_encode(["status" => "success", "message" => "Account created! You can now log in."]);
     }
 
-    // =========================================================
-    // 🔑 MANUAL LOGIN
-    // =========================================================
+    // -----------------------------------------------------------
+    // Manual Login
+    // The user enters their email and password to log in.
+    // -----------------------------------------------------------
     public function handleManualLogin($data) {
         if (empty($data["email"]) || empty($data["password"])) {
-            echo json_encode(["status" => "error", "message" => "Email and password are required."]);
+            echo json_encode(["status" => "error", "message" => "Please enter your email and password."]);
             return;
         }
 
-        $dbObj     = new DatabaseConnection();
-        $db        = $dbObj->connect();
+        $db = (new DatabaseConnection())->connect();
         $userModel = new UserModel($db);
 
         $user = $userModel->findByEmail($data["email"]);
 
-        if ($user) {
-            if (password_verify($data["password"], $user["password"])) {
-                $_SESSION["user_id"]   = $user["id"];
-                $_SESSION["user_role"] = $user["role"];
+        // Check if the user exists and the password matches
+        if ($user && password_verify($data["password"], $user["password"])) {
+            $_SESSION["user_id"]   = $user["id"];
+            $_SESSION["user_role"] = $user["role"];
 
-                echo json_encode(["status" => "success", "role" => $user["role"]]);
-                return;
-            }
+            echo json_encode(["status" => "success", "role" => $user["role"]]);
+            return;
         }
 
-        echo json_encode(["status" => "error", "message" => "Invalid email or password."]);
+        echo json_encode(["status" => "error", "message" => "Incorrect email or password."]);
     }
 }
