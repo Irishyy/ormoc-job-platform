@@ -152,10 +152,6 @@
         </nav>
     </aside>
 
-    <a href="https://apps.evsu.edu.ph/" target="_blank" rel="noopener noreferrer" class="evsu-top-left-link" aria-label="Open EVSU App">
-    <img src="/ormoc-job-platform/EVSU_Official_Logo.png" alt="EVSU Logo" class="evsu-logo" />
-    </a>
-
     <main class="main-content">
 
         <section id="panel-overview" class="dashboard-panel">

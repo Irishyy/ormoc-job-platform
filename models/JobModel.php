@@ -1,6 +1,9 @@
 <?php
+<<<<<<< HEAD
 // models/JobModel.php
 // This file handles everything related to jobs and applications in the database.
+=======
+>>>>>>> 344b2991fd1404c4b197cd3d915c2c32fe6b433c
 
 class JobModel {
 

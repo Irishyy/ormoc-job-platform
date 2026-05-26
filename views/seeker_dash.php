@@ -5,8 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Seeker Dashboard</title>
     
+<<<<<<< HEAD
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="../assets/css/seeker_dash.css">
+=======
+    <link rel="stylesheet" href="/ormoc-job-platform/assets/css/style.css">
+    
+    <style>
+        /* Structural Layout & Spacing Engine Only */
+        body { 
+            margin: 0; 
+            font-family: sans-serif; 
+        }
+        
+        /* Layout Framework Split */
+        .sidebar { 
+            width: 260px; 
+            height: 100vh; 
+            position: fixed; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        
+        .main-content { 
+            margin-left: 280px; 
+            padding: 40px; 
+            width: calc(100% - 280px); 
+            box-sizing: border-box; 
+        }
+
+        /* Profile Area Spacing */
+        .profile-container { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+
+        /* Seeker Name Input Row */
+        .seeker-name-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        .seeker-name-row input {
+            width: 140px;
+            padding: 6px 8px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        .seeker-name-row button {
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* Sidebar Navigation List Spacing */
+        .sidebar-menu ul { 
+            list-style: none; 
+            padding: 0; 
+            margin: 0; 
+        }
+        .sidebar-menu li { 
+            margin-bottom: 15px; 
+        }
+        .sidebar-menu a { 
+            text-decoration: none; 
+            display: block; 
+            padding: 10px; 
+        }
+
+        /* Workspace Grid Split for Interactive Map View Feed */
+        .seeker-grid { 
+            display: grid; 
+            grid-template-columns: 1.2fr 0.8fr; 
+            gap: 30px; 
+            margin-top: 20px; 
+        }
+        
+        /* Application Upload Field Spacing */
+        .application-box {
+            padding: 20px;
+            margin-top: 15px;
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+        }
+
+        /* Table Padding Blocks */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+        th, td { 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #ccc; 
+        }
+    </style>
+>>>>>>> 344b2991fd1404c4b197cd3d915c2c32fe6b433c
 </head>
 <body>
 
@@ -34,7 +135,11 @@
                 </li>
             </ul>
         </nav>
-    </aside>
+</aside>
+
+<a href="https://apps.evsu.edu.ph/" target="_blank" rel="noopener noreferrer" class="evsu-top-left-link" aria-label="Open EVSU App">
+    <img src="/ormoc-job-platform/EVSU_Official_Logo.png" alt="EVSU Logo" class="evsu-logo" />
+</a>
 
     <main class="main-content">
 
