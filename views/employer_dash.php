@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employer Dashboard</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+   <link rel="stylesheet" href="/ormoc-job-platform/assets/css/style.css">
     
     <style>
         /* Structural Layout & Spacing Engine Only */
@@ -150,6 +150,10 @@
             </ul>
         </nav>
     </aside>
+    
+<a href="https://apps.evsu.edu.ph/" target="_blank" rel="noopener noreferrer" class="evsu-top-left-link" aria-label="Open EVSU App">
+    <img src="/ormoc-job-platform/EVSU_Official_Logo.png" alt="EVSU Logo" class="evsu-logo" />
+</a>
 
     <main class="main-content">
 

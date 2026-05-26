@@ -1,0 +1,463 @@
+/* ==========================================================================
+   💎 PLATFORM PREMIUM UI STYLING ENGINE - CRIMSON, BLACK, & WHITE
+   ========================================================================== */
+
+:root {
+    --bg-main: #fcfcfc;
+    --bg-sidebar: #0f0f11;
+    --text-dark: #16161a;
+    --text-muted: #6e6e73;
+    --text-light: #ffffff;
+    
+    /* Personal Branding Palette */
+    --accent-red: #da291c;
+    --accent-red-hover: #b31d14;
+    --accent-red-light: #fce8e6;
+    --border-color: #e8e8ed;
+
+    /* Semantic Status Colors */
+    --status-pending: #d97706;
+    --status-reviewed: #2563eb;
+    --status-accepted: #16a34a;
+    --status-rejected: #dc2626;
+
+    /* Layout Constants */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.06);
+    --radius: 12px;
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global Platform Resets */
+body { 
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background: var(--border-color);
+    margin: 24px 0;
+}
+
+h2 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+    margin: 0;
+    color: var(--text-dark);
+}
+
+/* ==========================================================================
+   🔑 PORTAL ACCESS GATEWAY (login.php)
+   ========================================================================== */
+.login-body-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f5f5f7;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 440px;
+    padding: 40px;
+    background: var(--text-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    border-top: 4px solid var(--accent-red);
+    box-sizing: border-box;
+}
+
+.login-container h2 {
+    font-size: 22px;
+    text-align: center;
+    margin-bottom: 24px;
+    letter-spacing: -0.5px;
+}
+
+.login-container h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    margin: 24px 0 16px 0;
+}
+
+.login-container label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.login-container select,
+.login-container input {
+    width: 100%;
+    padding: 12px 16px;
+    margin-top: 6px;
+    margin-bottom: 16px;
+    border: 1px solid #d2d2d7;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background-color: #fafafa;
+    transition: var(--transition);
+}
+
+.login-container select:focus,
+.login-container input:focus {
+    outline: none;
+    border-color: var(--accent-red);
+    background-color: var(--text-light);
+    box-shadow: 0 0 0 4px rgba(218, 41, 28, 0.12);
+}
+
+.login-container button {
+    width: 100%;
+    padding: 14px;
+    background: var(--bg-sidebar);
+    color: var(--text-light);
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 10px;
+}
+
+.login-container button:hover {
+    background: var(--accent-red);
+}
+
+.login-container button + button {
+    background: transparent;
+    color: var(--text-dark);
+    border: 1px solid #d2d2d7;
+}
+
+.login-container button + button:hover {
+    background: #f5f5f7;
+    color: var(--text-dark);
+    border-color: #8e8e93;
+}
+
+/* ==========================================================================
+   🎛️ BACKBONE LAYOUT & APPLICATION SIDEBAR
+   ========================================================================== */
+.sidebar { 
+    width: 280px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: var(--bg-sidebar);
+    color: var(--text-light);
+    padding: 40px 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.main-content { 
+    margin-left: 280px;
+    padding: 48px;
+    width: calc(100% - 280px);
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+/* Profile Section Component */
+.profile-upload-container { 
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.profile-upload-container img { 
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    transition: var(--transition);
+}
+
+.profile-upload-container img:hover {
+    border-color: var(--accent-red);
+    transform: scale(1.02);
+}
+
+#companyName, #seekerName {
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 14px;
+    margin-bottom: 0;
+    color: var(--text-light);
+    letter-spacing: -0.3px;
+}
+
+/* Contextual Control Row */
+.company-name-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: center;
+}
+
+.company-name-row input {
+    width: 140px;
+    padding: 8px 12px;
+    font-size: 13px;
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    color: var(--text-light);
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.company-name-row input:focus {
+    outline: none;
+    border-color: var(--accent-red);
+}
+
+.company-name-row button, #saveNameBtn {
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.company-name-row button:hover, #saveNameBtn:hover {
+    background: var(--accent-red-hover);
+}
+
+/* Navigation System Links */
+.sidebar-menu ul { 
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li { 
+    margin-bottom: 6px;
+}
+
+.sidebar-menu a { 
+    text-decoration: none;
+    display: block;
+    padding: 12px 16px;
+    color: #ababab;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.sidebar-menu a:hover {
+    color: var(--text-light);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Master State Triggering (JS Controlled Class) */
+.sidebar-menu a.active { 
+    background-color: var(--accent-red) !important;
+    color: var(--text-light) !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(218, 41, 28, 0.25);
+}
+
+/* ==========================================================================
+   🤑 DESKTOP MODULE WORKSPACE CARDS & GRAPHICS
+   ========================================================================== */
+.dashboard-grid { 
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 32px;
+    margin-top: 24px;
+}
+
+@media (max-width: 1100px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.workspace-card {
+    background: var(--text-light);
+    padding: 32px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    box-sizing: border-box;
+}
+
+.workspace-card h3 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+}
+
+/* Standard Inputs & Textareas */
+.form-group { 
+    margin-bottom: 24px;
+}
+
+.form-group label { 
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.form-group input, 
+.form-group textarea,
+.form-group select { 
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #fafafa;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: var(--transition);
+}
+
+.form-group input:focus, 
+.form-group textarea:focus { 
+    outline: none;
+    border-color: var(--accent-red);
+    background-color: var(--text-light);
+    box-shadow: 0 0 0 4px rgba(218, 41, 28, 0.1);
+}
+
+button[type="submit"] { 
+    width: 100%;
+    padding: 14px;
+    background: var(--bg-sidebar);
+    color: var(--text-light);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+button[type="submit"]:hover { 
+    background: var(--accent-red);
+    box-shadow: 0 4px 12px rgba(218, 41, 28, 0.2);
+}
+
+/* Leaflet Container Correction Block */
+#map {
+    height: 380px !important;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================================================
+   📊 DATA STORAGE TABLES Engine
+   ========================================================================== */
+table { 
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 16px;
+    background: var(--text-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+th { 
+    background-color: #f5f5f7;
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+td { 
+    padding: 18px 24px;
+    font-size: 14px;
+    color: #3a3a3c;
+    border-bottom: 1px solid var(--border-color);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td {
+    background-color: #fafafa;
+}
+
+/* Badges for Application Tracking Status Engine */
+.status-pill {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* ==========================================================================
+   🎓 INSTITUTIONAL LOGO INNER ENGINE (EVSU BRANDING)
+   ========================================================================== */
+.evsu-branding-container {
+    text-align: center;
+    padding: 15px 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.evsu-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 60%;
+    background-color: var(--text-light);
+    padding: 6px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--accent-red);
+    transition: var(--transition);
+}
+
+.evsu-logo:hover {
+    transform: rotate(5deg) scale(1.05);
+    box-shadow: 0 6px 15px rgba(218, 41, 28, 0.3);
+}
+
+
+.status-pending  { background-color: #fffbeb; color: var(--status-pending); }
+.status-reviewed { background-color: #eff6ff; color: var(--status-reviewed); }
+.status-accepted { background-color: #f0fdf4; color: var(--status-accepted); }
+.status-rejected { background-color: #fef2f2; color: var(--status-rejected); }
+

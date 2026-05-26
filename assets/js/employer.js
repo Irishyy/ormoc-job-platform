@@ -1,7 +1,7 @@
 // assets/js/employer.js
 
 // =========================================================
-// 🗂️ TAB SINGLE-PAGE SWITCHING ROUTINES
+// 🗂️ TAB SINGLE-PAGE SWITCHING ROUTINES (GI-AYO PARA SA CSS)
 // =========================================================
 function initializeTabSwitchingEngine() {
     var tabLinks     = document.querySelectorAll('.nav-tab');
@@ -11,19 +11,15 @@ function initializeTabSwitchingEngine() {
         link.addEventListener('click', function(event) {
             event.preventDefault();
 
-            // 1. Drop active color states from all navigation buttons
+            // 1. Tangtangon ang 'active' class sa tanang tabs (Gikuha ang JS inline colors)
             tabLinks.forEach(function(t) {
-                t.style.background = "transparent";
-                t.style.color = "#bdc3c7";
                 t.classList.remove('active');
             });
 
-            // 2. Highlight the clicked tab
-            this.style.background = "#34495e";
-            this.style.color = "white";
+            // 2. I-add ang 'active' class sa tab nga gipili aron mosalmot sa style.css
             this.classList.add('active');
 
-            // 3. Switch display visibility across all panels
+            // 3. I-switch ang visibility sa mga panels
             var targetedPanelId = this.getAttribute('data-target');
 
             displayPanels.forEach(function(panel) {
@@ -34,11 +30,11 @@ function initializeTabSwitchingEngine() {
                 }
             });
 
-            // Leaflet layout fix: recalibrate map on tab switch
+            // 🔥 FIX SA SIZING BUG (#2): Re-calibrate sa Leaflet Map container sa sakto nga timing
             if (targetedPanelId === 'panel-overview' && window.employerMap) {
                 setTimeout(function() {
                     window.employerMap.invalidateSize();
-                }, 50);
+                }, 100); // Gihatagan og 100ms aron makamata og hapsay ang map container
             }
         });
     });
@@ -233,7 +229,7 @@ async function loadEmployerDashboardData() {
                         "<td>" + new Date(job.created_at).toLocaleDateString() + "</td>" +
                         "<td>Lat: " + parseFloat(job.latitude).toFixed(4) + ", Lng: " + parseFloat(job.longitude).toFixed(4) + "</td>" +
                         "<td>" +
-                            "<button onclick=\"deleteJobListing(" + job.id + ")\" style=\"background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;\">Delete</button>" +
+                            "<button onclick=\"deleteJobListing(" + job.id + ")\" style=\"background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;\">Delete</button>" +
                         "</td>";
                     jobsTableBody.appendChild(tr);
                 });
@@ -253,9 +249,8 @@ async function loadEmployerDashboardData() {
                 appResponse.data.data.forEach(function(app) {
                     var tr = document.createElement('tr');
 
-                    // Status dropdown — maps to valid DB enum values
                     var selectHtml =
-                        "<select onchange=\"updateStatus(" + app.application_id + ", this.value)\" style=\"padding:4px; font-size:11px; cursor:pointer;\">" +
+                        "<select onchange=\"updateStatus(" + app.application_id + ", this.value)\">" +
                             "<option value='pending'"     + (app.status === 'pending'     ? ' selected' : '') + ">⏳ Pending</option>" +
                             "<option value='reviewed'"    + (app.status === 'reviewed'    ? ' selected' : '') + ">📋 Reviewed</option>" +
                             "<option value='accepted'"    + (app.status === 'accepted'    ? ' selected' : '') + ">✅ Accepted</option>" +
@@ -265,7 +260,7 @@ async function loadEmployerDashboardData() {
                     tr.innerHTML =
                         "<td><strong>" + (app.applicant_name ? app.applicant_name : 'Candidate Profile') + "</strong></td>" +
                         "<td>" + app.job_title + "</td>" +
-                        "<td><a href='" + app.resume_url + "' target='_blank' style='color:blue; text-decoration:underline;'>Open Document</a></td>" +
+                        "<td><a href='" + app.resume_url + "' target='_blank' style='color:#da291c; font-weight:600; text-decoration:none;'>Open Document</a></td>" +
                         "<td><span class='status-pill status-" + app.status + "'>" + app.status.toUpperCase() + "</span></td>" +
                         "<td>" + selectHtml + "</td>";
 
