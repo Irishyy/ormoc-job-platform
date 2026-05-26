@@ -1,346 +1,298 @@
 // assets/js/employer.js
+// Powers the employer dashboard:
+//   - Tab switching
+//   - Map for picking a job location
+//   - Uploading a company logo
+//   - Saving the company name
+//   - Posting, viewing, and deleting jobs
+//   - Viewing applicants and updating their status
 
-// =========================================================
-// 🗂️ TAB SINGLE-PAGE SWITCHING ROUTINES
-// =========================================================
-function initializeTabSwitchingEngine() {
-    var tabLinks     = document.querySelectorAll('.nav-tab');
-    var displayPanels = document.querySelectorAll('.dashboard-panel');
+var employerMap     = null;
+var selectedMarker  = null;
 
-    tabLinks.forEach(function(link) {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
+// ─── Tab Switching ────────────────────────────────────────
 
-            // 1. Drop active color states from all navigation buttons
-            tabLinks.forEach(function(t) {
-                t.style.background = "transparent";
-                t.style.color = "#bdc3c7";
-                t.classList.remove('active');
-            });
+function initTabs() {
+    var tabs   = document.querySelectorAll(".nav-tab");
+    var panels = document.querySelectorAll(".dashboard-panel");
 
-            // 2. Highlight the clicked tab
-            this.style.background = "#34495e";
-            this.style.color = "white";
-            this.classList.add('active');
+    tabs.forEach(function(tab) {
+        tab.addEventListener("click", function(e) {
+            e.preventDefault();
 
-            // 3. Switch display visibility across all panels
-            var targetedPanelId = this.getAttribute('data-target');
+            // Deactivate all tabs
+            tabs.forEach(function(t) { t.classList.remove("active"); });
+            // Hide all panels
+            panels.forEach(function(p) { p.style.display = "none"; });
 
-            displayPanels.forEach(function(panel) {
-                if (panel.id === targetedPanelId) {
-                    panel.style.display = "block";
-                } else {
-                    panel.style.display = "none";
-                }
-            });
+            // Activate the clicked tab and show its panel
+            tab.classList.add("active");
+            var targetId = tab.getAttribute("data-target");
+            document.getElementById(targetId).style.display = "block";
 
-            // Leaflet layout fix: recalibrate map on tab switch
+            // Leaflet needs a nudge when its container becomes visible
             if (targetedPanelId === 'panel-overview' && window.employerMap) {
                 setTimeout(function() {
                     window.employerMap.invalidateSize();
-                }, 50);
+                }, 100); // Gihatagan og 100ms aron makamata og hapsay ang map container
             }
         });
     });
 }
 
-// =========================================================
-// 🗺️ MAP WORKSPACE INITIALIZATION
-// =========================================================
-var employerMap;
-var selectedMarker = null;
 
-function initEmployerMap() {
-    employerMap = createBaseOrmocMap('map');
+// ─── Map ──────────────────────────────────────────────────
+
+function initMap() {
+    employerMap = createBaseOrmocMap("map");
     if (!employerMap) return;
 
-    window.employerMap = employerMap;
+    employerMap.on("click", function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
 
-    employerMap.on('click', function(event) {
-        var lat = event.latlng.lat;
-        var lng = event.latlng.lng;
+        // Save coordinates into the hidden form inputs
+        document.getElementById("jobLat").value = lat;
+        document.getElementById("jobLng").value = lng;
 
-        var jobLatInput  = document.getElementById('jobLat');
-        var jobLngInput  = document.getElementById('jobLng');
-        var coordDisplay = document.getElementById('coordDisplay');
+        // Show the picked coordinates on screen
+        document.getElementById("coordDisplay").innerText =
+            "Lat: " + lat.toFixed(5) + ", Lng: " + lng.toFixed(5);
 
-        if (jobLatInput)  jobLatInput.value  = lat;
-        if (jobLngInput)  jobLngInput.value  = lng;
-        if (coordDisplay) coordDisplay.innerText = 'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5);
-
+        // Move the existing marker or place a new one
         if (selectedMarker) {
-            selectedMarker.setLatLng(event.latlng);
+            selectedMarker.setLatLng(e.latlng);
         } else {
-            selectedMarker = L.marker(event.latlng).addTo(employerMap);
+            selectedMarker = L.marker(e.latlng).addTo(employerMap);
         }
     });
 }
 
-// =========================================================
-// 📸 CLOUDINARY LOGO UPLOAD HANDLER
-// =========================================================
-async function handleLogoChange(event) {
+
+// ─── Logo Upload ──────────────────────────────────────────
+
+async function handleLogoUpload(event) {
     var file = event.target.files[0];
     if (!file) return;
 
-    var nameLabel    = document.getElementById('companyName');
-    var companyInput = document.getElementById('companyNameInput');
-    var originalText = nameLabel ? nameLabel.innerText : "My Company";
-
-    if (nameLabel) nameLabel.innerText = "Uploading Media Asset...";
+    // require_once './assets/js/cloudinary-helper.js';
 
     try {
-        var directCloudUrl = await uploadMediaFile(file, 'company_logos');
+        var logoUrl = await uploadMediaFile(file, "company_logos");
 
-        var currentName = companyInput ? companyInput.value.trim() : originalText;
-        if (!currentName || currentName === "Loading...") {
-            currentName = originalText !== "Loading..." ? originalText : "My Company";
-        }
-
-        var response = await axios.post('../routes/api.php?action=save_employer_profile', {
-            company_name: currentName,
-            company_logo_url: directCloudUrl,
-            website: ""
+        await axios.post("../routes/api.php?action=save_employer_profile", {
+            company_name:      document.getElementById("companyNameInput").value.trim() || "My Company",
+            company_logo_url:  logoUrl
         });
 
-        if (response.data.status === 'success') {
-            var companyLogo = document.getElementById('companyLogo');
-            if (companyLogo) companyLogo.src = directCloudUrl;
-            if (nameLabel) nameLabel.innerText = "Profile Image Updated!";
-            setTimeout(function() {
-                if (nameLabel) nameLabel.innerText = currentName;
-            }, 2000);
-        } else {
-            alert("Database synchronization failure: " + response.data.message);
-            if (nameLabel) nameLabel.innerText = originalText;
-        }
-    } catch (error) {
-        console.error("Cloudinary deployment crash:", error);
-        alert("Failed to push image to storage cluster.");
-        if (nameLabel) nameLabel.innerText = originalText;
+        document.getElementById("companyLogo").src = logoUrl;
+
+    } catch (err) {
+        console.error("Logo upload failed:", err);
+        alert("Logo upload failed. Please try again.");
     }
 }
 
-// =========================================================
-// 💾 SAVE COMPANY NAME HANDLER
-// =========================================================
+
+// ─── Save Company Name ────────────────────────────────────
+
 async function handleSaveCompanyName() {
-    var companyInput = document.getElementById('companyNameInput');
-    var companyLogo  = document.getElementById('companyLogo');
-    var nameLabel    = document.getElementById('companyName');
+    var name = document.getElementById("companyNameInput").value.trim();
 
-    if (!companyInput) return;
-
-    var newName = companyInput.value.trim();
-    if (!newName) {
-        alert("Please enter a valid company name.");
+    if (!name) {
+        alert("Please enter a company name.");
         return;
     }
 
-    var currentLogoUrl = companyLogo ? companyLogo.src : "";
-
     try {
-        var response = await axios.post('../routes/api.php?action=save_employer_profile', {
-            company_name: newName,
-            company_logo_url: currentLogoUrl,
-            website: ""
+        var res = await axios.post("../routes/api.php?action=save_employer_profile", {
+            company_name:     name,
+            company_logo_url: document.getElementById("companyLogo").src
         });
 
-        if (response.data.status === 'success') {
-            if (nameLabel) nameLabel.innerText = newName;
-            alert("Company name saved successfully!");
+        if (res.data.status === "success") {
+            document.getElementById("companyName").innerText = name;
+            alert("Company name saved!");
         } else {
-            alert("Save failed: " + response.data.message);
+            alert("Save failed: " + res.data.message);
         }
-    } catch (error) {
-        console.error("Save company name error:", error);
+    } catch (err) {
+        console.error("Save name error:", err);
         alert("Could not save company name.");
     }
 }
 
-// =========================================================
-// 🏢 PUBLISH JOB VACANCY HANDLER (POST)
-// =========================================================
-async function handleJobSubmission(event) {
+
+// ─── Post a Job ───────────────────────────────────────────
+
+async function handleJobSubmit(event) {
     event.preventDefault();
 
-    var jobTitleEl = document.getElementById('jobTitle');
-    var jobDescEl  = document.getElementById('jobDesc');
-    var jobLatEl   = document.getElementById('jobLat');
-    var jobLngEl   = document.getElementById('jobLng');
+    var lat = document.getElementById("jobLat").value;
+    var lng = document.getElementById("jobLng").value;
 
-    var title       = jobTitleEl   ? jobTitleEl.value   : '';
-    var description = jobDescEl    ? jobDescEl.value    : '';
-    var latitude    = jobLatEl     ? jobLatEl.value     : '';
-    var longitude   = jobLngEl     ? jobLngEl.value     : '';
-
-    if (!latitude || !longitude) {
-        alert("Error: You must pinpoint your business address location on the map.");
+    if (!lat || !lng) {
+        alert("Please click a location on the map first.");
         return;
     }
 
     try {
-        var response = await axios.post('../routes/api.php?action=publish_job', {
-            title:       title,
-            description: description,
-            latitude:    latitude,
-            longitude:   longitude
+        var res = await axios.post("../routes/api.php?action=publish_job", {
+            title:       document.getElementById("jobTitle").value,
+            description: document.getElementById("jobDesc").value,
+            latitude:    lat,
+            longitude:   lng
         });
 
-        if (response.data.status === 'success') {
-            alert("Success: Vacancy active on map views!");
+        if (res.data.status === "success") {
+            alert("Job posted!");
+            document.getElementById("jobForm").reset();
+            document.getElementById("coordDisplay").innerText = "No location chosen";
 
-            var jobForm = document.getElementById('jobForm');
-            if (jobForm) jobForm.reset();
-
-            if (selectedMarker && employerMap) {
+            if (selectedMarker) {
                 employerMap.removeLayer(selectedMarker);
                 selectedMarker = null;
             }
 
-            var coordDisplay = document.getElementById('coordDisplay');
-            if (coordDisplay) coordDisplay.innerText = "No location chosen";
-
-            loadEmployerDashboardData();
+            loadDashboardData();
         } else {
-            alert("Publishing rejected: " + response.data.message);
+            alert("Failed to post job: " + res.data.message);
         }
-    } catch (error) {
-        console.error("Network interface fault:", error);
-        alert("Could not push job metadata to endpoint.");
+    } catch (err) {
+        console.error("Post job error:", err);
+        alert("Could not post the job.");
     }
 }
 
-// =========================================================
-// 📥 LOAD ALL DASHBOARD METRICS (GET)
-// =========================================================
-async function loadEmployerDashboardData() {
+
+// ─── Delete a Job ─────────────────────────────────────────
+
+async function deleteJob(jobId) {
+    if (!confirm("Delete this job? This cannot be undone.")) return;
+
     try {
-        // --- 1. JOBS TABLE ---
-        var jobsResponse = await axios.get('../routes/api.php?action=get_employer_jobs');
-        var jobsTableBody = document.getElementById('jobsTableBody');
+        var res = await axios.post("../routes/api.php?action=delete_job", { job_id: jobId });
 
-        if (jobsResponse.data.status === 'success' && jobsTableBody) {
-            jobsTableBody.innerHTML = "";
-
-            if (jobsResponse.data.data.length === 0) {
-                jobsTableBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#888;'>No active vacancies published yet.</td></tr>";
-            } else {
-                jobsResponse.data.data.forEach(function(job) {
-                    var tr = document.createElement('tr');
-                    tr.innerHTML =
-                        "<td><strong>" + job.title + "</strong></td>" +
-                        "<td>" + new Date(job.created_at).toLocaleDateString() + "</td>" +
-                        "<td>Lat: " + parseFloat(job.latitude).toFixed(4) + ", Lng: " + parseFloat(job.longitude).toFixed(4) + "</td>" +
-                        "<td>" +
-                            "<button onclick=\"deleteJobListing(" + job.id + ")\" style=\"background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;\">Delete</button>" +
-                        "</td>";
-                    jobsTableBody.appendChild(tr);
-                });
-            }
+        if (res.data.status === "success") {
+            loadDashboardData();
+        } else {
+            alert("Delete failed: " + res.data.message);
         }
-
-        // --- 2. APPLICANTS TABLE ---
-        var appResponse = await axios.get('../routes/api.php?action=get_employer_applications');
-        var applicantsTableBody = document.getElementById('applicantsTableBody');
-
-        if (appResponse.data.status === 'success' && applicantsTableBody) {
-            applicantsTableBody.innerHTML = "";
-
-            if (appResponse.data.data.length === 0) {
-                applicantsTableBody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#888;'>No applications received yet.</td></tr>";
-            } else {
-                appResponse.data.data.forEach(function(app) {
-                    var tr = document.createElement('tr');
-
-                    // Status dropdown — maps to valid DB enum values
-                    var selectHtml =
-                        "<select onchange=\"updateStatus(" + app.application_id + ", this.value)\" style=\"padding:4px; font-size:11px; cursor:pointer;\">" +
-                            "<option value='pending'"     + (app.status === 'pending'     ? ' selected' : '') + ">⏳ Pending</option>" +
-                            "<option value='reviewed'"    + (app.status === 'reviewed'    ? ' selected' : '') + ">📋 Reviewed</option>" +
-                            "<option value='accepted'"    + (app.status === 'accepted'    ? ' selected' : '') + ">✅ Accepted</option>" +
-                            "<option value='rejected'"    + (app.status === 'rejected'    ? ' selected' : '') + ">❌ Rejected</option>" +
-                        "</select>";
-
-                    tr.innerHTML =
-                        "<td><strong>" + (app.applicant_name ? app.applicant_name : 'Candidate Profile') + "</strong></td>" +
-                        "<td>" + app.job_title + "</td>" +
-                        "<td><a href='" + app.resume_url + "' target='_blank' style='color:blue; text-decoration:underline;'>Open Document</a></td>" +
-                        "<td><span class='status-pill status-" + app.status + "'>" + app.status.toUpperCase() + "</span></td>" +
-                        "<td>" + selectHtml + "</td>";
-
-                    applicantsTableBody.appendChild(tr);
-                });
-            }
-        }
-    } catch (error) {
-        console.error("Error loading dashboard data streams:", error);
+    } catch (err) {
+        console.error("Delete job error:", err);
+        alert("Could not delete the job.");
     }
 }
 
-// =========================================================
-// 🔄 UPDATE APPLICATION STATUS (POST)
-// =========================================================
+
+// ─── Update Applicant Status ──────────────────────────────
+
 async function updateStatus(applicationId, newStatus) {
     try {
-        var response = await axios.post('../routes/api.php?action=update_application_status', {
+        var res = await axios.post("../routes/api.php?action=update_application_status", {
             application_id: applicationId,
-            status: newStatus
+            status:  newStatus
         });
-        if (response.data.status === 'success') {
-            loadEmployerDashboardData();
-        } else {
-            alert("Failed to save tracking change: " + response.data.message);
+
+        if (res.data.status !== "success") {
+            alert("Status update failed: " + res.data.message);
         }
     } catch (err) {
         console.error("Status update error:", err);
     }
 }
 
-// =========================================================
-// 🗑️ DELETE JOB LISTING (POST)
-// =========================================================
-async function deleteJobListing(jobId) {
-    var userConfirmed = confirm("Are you sure you want to permanently delete this job post? This cannot be undone.");
-    if (!userConfirmed) return;
 
+// ─── Load All Dashboard Data ──────────────────────────────
+
+async function loadDashboardData() {
+    await loadJobsTable();
+    await loadApplicantsTable();
+}
+
+async function loadJobsTable() {
     try {
-        var response = await axios.post('../routes/api.php?action=delete_job', {
-            job_id: jobId
-        });
+        var res  = await axios.get("../routes/api.php?action=get_employer_jobs");
+        var body = document.getElementById("jobsTableBody");
 
-        if (response.data.status === 'success') {
-            alert("Vacancy deleted successfully.");
-            loadEmployerDashboardData();
-        } else {
-            alert("Failed to delete entry: " + response.data.message);
+        if (res.data.status !== "success" || !body) return;
+
+        var jobs = res.data.data;
+
+        if (jobs.length === 0) {
+            body.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No jobs posted yet.</td></tr>";
+            return;
         }
-    } catch (error) {
-        console.error("Deletion pipeline failure:", error);
-        alert("Could not process record deletion.");
+
+        body.innerHTML = jobs.map(function(job) {
+            return "<tr>" +
+                "<td><strong>" + job.title + "</strong></td>" +
+                "<td>" + new Date(job.created_at).toLocaleDateString() + "</td>" +
+                "<td>Lat: " + parseFloat(job.latitude).toFixed(4) + ", Lng: " + parseFloat(job.longitude).toFixed(4) + "</td>" +
+                "<td><button onclick='deleteJob(" + job.id + ")' style='background:#dc3545;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;'>Delete</button></td>" +
+            "</tr>";
+        }).join("");
+
+    } catch (err) {
+        console.error("Load jobs error:", err);
     }
 }
 
-// =========================================================
-// 🚀 ENGINE LAUNCH ON DOM READY
-// =========================================================
+async function loadApplicantsTable() {
+    try {
+        var res  = await axios.get("../routes/api.php?action=get_employer_applications");
+        var body = document.getElementById("applicantsTableBody");
+
+        if (res.data.status !== "success" || !body) return;
+
+        var apps = res.data.data;
+
+        if (apps.length === 0) {
+            body.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No applications yet.</td></tr>";
+            return;
+        }
+
+        body.innerHTML = apps.map(function(app) {
+            var statuses = ["pending", "reviewed", "accepted", "rejected"];
+
+            var dropdown = 
+            "<select onchange='updateStatus(" + app.application_id + ", this.value)'>" +
+                statuses.map(function(s) {
+                    return "<option value='" + s + "'" + (app.status === s ? " selected" : "") + ">" + s + "</option>";
+                }).join("") +
+            "</select>";
+
+            return `
+            <tr>
+                <td><strong>${app.applicant_name || "Candidate Profile"}</strong></td>
+                <td>${app.job_title}</td>
+                <td>
+                    <a href="${app.resume_url}" target="_blank" style="color:#da291c; font-weight:600; text-decoration:none;">Open Document</a>
+                </td>
+                <td><span class="status-pill status-${app.status}">${app.status.toUpperCase()}</span></td>
+                <td>
+                    <select onchange="updateStatus(${app.application_id}, this.value)">
+                        ${dropdownOptions}
+                    </select>
+                </td>
+            </tr>
+        `;
+        }).join("");
+
+    } catch (err) {
+        console.error("Load applicants error:", err);
+    }
+}
+
+
+// ─── Boot ─────────────────────────────────────────────────
+
 document.addEventListener("DOMContentLoaded", function() {
-    initializeTabSwitchingEngine();
-    initEmployerMap();
-    loadEmployerDashboardData();
+    initTabs();
+    initMap();
+    loadDashboardData();
 
-    var jobForm = document.getElementById('jobForm');
-    if (jobForm) {
-        jobForm.addEventListener('submit', handleJobSubmission);
-    }
-
-    var fileInput = document.getElementById('logoFileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', handleLogoChange);
-    }
-
-    var saveNameBtn = document.getElementById('saveNameBtn');
-    if (saveNameBtn) {
-        saveNameBtn.addEventListener('click', handleSaveCompanyName);
-    }
+    document.getElementById("jobForm").addEventListener("submit", handleJobSubmit);
+    document.getElementById("logoFileInput").addEventListener("change", handleLogoUpload);
+    document.getElementById("saveNameBtn").addEventListener("click", handleSaveCompanyName);
 });
