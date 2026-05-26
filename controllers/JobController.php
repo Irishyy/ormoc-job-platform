@@ -1,193 +1,149 @@
 <?php
+// controllers/JobController.php
+// This file handles all job-related actions: posting jobs, fetching jobs, and deleting jobs.
+// It also handles saving the employer's company profile.
+
 require_once __DIR__ . "/../models/JobModel.php";
 
 class JobController {
 
-  private $conn;
-  private $jobModel;
+    private $conn;
+    private $jobModel;
 
-  // Multi-line explicit constructor passing the MySQLi connection instance
-  public function __construct($db) {
-    $this->conn = $db;
-    $this->jobModel = new JobModel($this->conn);
-  }
-
-  /**
-   * Action: GET all jobs across the platform (for Seeker Dashboard Map/Feed)
-   */
-  public function handleGetAllJobs() {
-      $jobs = $this->jobModel->getAllJobs();
-      
-      echo json_encode(["status" => "success", "data" => $jobs]);
-      exit;
-  }
-
-  /**
-   * Action: GET jobs belonging ONLY to the logged-in employer
-   */
-  public function handleGetEmployerJobs() {
-    if (!isset($_SESSION['user_id'])) {
-      echo json_encode(["status" => "error", "message" => "Session missing or unauthorized access."]);
-      exit;
+    public function __construct($db) {
+        $this->conn     = $db;
+        $this->jobModel = new JobModel($db);
     }
 
-    // Find the active sub-profile matching this user account ID
-    $employer = $this->jobModel->getEmployerByUserId($_SESSION['user_id']);
-    if (!$employer) {
-      echo json_encode(["status" => "success", "data" => []]);
-      exit;
+    // -----------------------------------------------------------
+    // Get all jobs across the platform
+    // Used by the seeker dashboard to show pins on the map
+    // -----------------------------------------------------------
+    public function handleGetAllJobs() {
+        $jobs = $this->jobModel->getAllJobs();
+        echo json_encode(["status" => "success", "data" => $jobs]);
     }
 
-    // Fetch jobs using the correct relational employers.id primary key
-    $jobs = $this->jobModel->getJobsByEmployer($employer['id']);
-    
-    echo json_encode(["status" => "success","data" => $jobs]);
-    exit;
-  }
-
-  /**
-   * Action: POST publish a new job vacancy with map markers
-   */
-  public function handlePublishJob($jsonData) {
-    if (!isset($_SESSION['user_id'])) {
-      echo json_encode(["status" => "error", "message" => "Session missing or expired."]);
-      exit;
-    }
-
-    // Validate that the user actually owns an employer sub-profile record
-    $employer = $this->jobModel->getEmployerByUserId($_SESSION['user_id']);
-    if (!$employer) {
-      echo json_encode(["status" => "error", "message" => "Profile mismatch. Account is not registered as an employer."]);
-      exit;
-    }
-
-    $title = $jsonData['title'] ?? '';
-    $description = $jsonData['description'] ?? '';
-    $latitude = $jsonData['latitude'] ?? null;
-    $longitude = $jsonData['longitude'] ?? null;
-
-    if (empty($title) || empty($description)) {
-      echo json_encode(["status" => "error", "message" => "Job title and description are mandatory fields."]);
-      exit;
-    }
-
-    // Fire database creation method inside our model
-    $newJobId = $this->jobModel->createJob($employer['id'], $title, $description, $latitude, $longitude);
-
-    if ($newJobId) {
-      echo json_encode([
-        "status" => "success",
-        "message" => "Vacancy published successfully!",
-        "job_id" => $newJobId
-      ]);
-    } else {
-      echo json_encode(["status" => "error", "message" => "Database write insertion fault."]);
-    }
-    exit;
-  }
-
-  // Inside controllers/JobController.php
-
-    /**
-     * Action: POST save or update employer profile metadata (Company Name, Cloudinary Logo URL)
-     * @param array $jsonData - The decoded JSON payload arriving from Axios
-     */
-    public function handleSaveEmployerProfile($jsonData) {
-      // 1. Session Authorization Safeguard Check
-      if (!isset($_SESSION['user_id'])) {
-        echo json_encode(["status" => "error", "message" => "Session expired or unauthorized request context."]);
-        exit;
-      }
-
-      $userId = (int) $_SESSION['user_id'];
-      
-      // 2. Extract values safely from incoming JSON data packets
-      $companyName = isset($jsonData['company_name']) ? trim($jsonData['company_name']) : '';
-      $logoUrl = isset($jsonData['company_logo_url']) ? trim($jsonData['company_logo_url']) : '';
-
-      // Fallback validation rules
-      if (empty($companyName) || $companyName === "Loading...") {
-        $companyName = "My Corporate Entity"; // Safe structural fallback string
-      }
-
-      // Sanitization Layer to completely neutralize malicious string characters
-      $safeCompanyName = $this->conn->real_escape_string($companyName);
-      $safeLogoUrl = $this->conn->real_escape_string($logoUrl);
-
-      // 3. Check if this user already has an existing sub-profile record
-      $checkSql = "SELECT id FROM employers WHERE user_id = $userId LIMIT 1";
-      $checkResult = $this->conn->query($checkSql);
-
-      if ($checkResult && $checkResult->num_rows > 0) {
-        // OPTION A: Row exists! Let's modify the profile parameters with an UPDATE query
-        $sql = "UPDATE employers 
-                SET company_name = '$safeCompanyName', company_logo_url = '$safeLogoUrl' 
-                WHERE user_id = $userId";
-      } else {
-          // OPTION B: Fresh user! Let's establish a new profile row slot via an INSERT query
-          $sql = "INSERT INTO employers (user_id, company_name, company_logo_url) 
-                  VALUES ($userId, '$safeCompanyName', '$safeLogoUrl')";
-      }
-
-      // 4. Fire the query statement at your MySQL cluster
-      $executionSuccess = $this->conn->query($sql);
-
-      if ($executionSuccess) {
-          echo json_encode([
-              "status" => "success",
-              "message" => "Employer profile adjustments synchronized successfully!"
-          ]);
-      } else {
-          // DB tracking log fail fallback info
-          echo json_encode([
-              "status" => "error", 
-              "message" => "Database modification error statement: " . $this->conn->error
-          ]);
-      }
-      exit;
-    }
-
-    /**
-     * Action: POST delete an existing vacancy listing
-     */
-    public function handleDeleteJob($jsonData) {
-        if (!isset($_SESSION['user_id'])) {
-            echo json_encode(["status" => "error", "message" => "Session missing or unauthorized access."]);
-            exit;
+    // -----------------------------------------------------------
+    // Get only the jobs posted by the logged-in employer
+    // -----------------------------------------------------------
+    public function handleGetEmployerJobs() {
+        if (!isset($_SESSION["user_id"])) {
+            echo json_encode(["status" => "error", "message" => "You are not logged in."]);
+            return;
         }
 
-        $jobId = isset($jsonData['job_id']) ? (int)$jsonData['job_id'] : 0;
+        // Find this employer's profile row using their user ID
+        $employer = $this->jobModel->getEmployerByUserId($_SESSION["user_id"]);
 
-        if ($jobId <= 0) {
-            echo json_encode(["status" => "error", "message" => "Invalid or missing Job identifier parameter."]);
-            exit;
-        }
-
-        // 1. Fetch the logged-in employer's record
-        $employer = $this->jobModel->getEmployerByUserId($_SESSION['user_id']);
         if (!$employer) {
-            echo json_encode(["status" => "error", "message" => "Employer sub-profile record missing."]);
-            exit;
+            echo json_encode(["status" => "success", "data" => []]);
+            return;
         }
 
-        // 2. Double-check ownership structure using your built-in model safety check
-        $belongsToUs = $this->jobModel->jobBelongsToEmployer($jobId, $employer['id']);
-        if (!$belongsToUs) {
-            echo json_encode(["status" => "error", "message" => "Security Alert: Unauthorized deletion request."]);
-            exit;
+        $jobs = $this->jobModel->getJobsByEmployer($employer["id"]);
+        echo json_encode(["status" => "success", "data" => $jobs]);
+    }
+
+    // -----------------------------------------------------------
+    // Post a new job listing
+    // -----------------------------------------------------------
+    public function handlePublishJob($data) {
+        if (!isset($_SESSION["user_id"])) {
+            echo json_encode(["status" => "error", "message" => "You are not logged in."]);
+            return;
         }
 
-        // 3. Execute the flat deletion statement inside your model
-        $affectedRows = $this->jobModel->deleteJob($jobId);
+        if (empty($data["title"]) || empty($data["description"])) {
+            echo json_encode(["status" => "error", "message" => "Job title and description are required."]);
+            return;
+        }
 
-        if ($affectedRows > 0) {
-            echo json_encode([
-                "status" => "success",
-                "message" => "Job listing removed permanently."
-            ]);
+        if (empty($data["latitude"]) || empty($data["longitude"])) {
+            echo json_encode(["status" => "error", "message" => "Please pin a location on the map."]);
+            return;
+        }
+
+        // Get the employer's profile row
+        $employer = $this->jobModel->getEmployerByUserId($_SESSION["user_id"]);
+
+        if (!$employer) {
+            echo json_encode(["status" => "error", "message" => "Employer profile not found."]);
+            return;
+        }
+
+        $newJobId = $this->jobModel->createJob(
+            $employer["id"],
+            $data["title"],
+            $data["description"],
+            $data["latitude"],
+            $data["longitude"]
+        );
+
+        if ($newJobId) {
+            echo json_encode(["status" => "success", "message" => "Job posted successfully!", "job_id" => $newJobId]);
         } else {
-            echo json_encode(["status" => "error", "message" => "Deletion process failed or item already removed."]);
+            echo json_encode(["status" => "error", "message" => "Failed to save the job. Try again."]);
         }
-        exit;
+    }
+
+    // -----------------------------------------------------------
+    // Delete a job listing
+    // Only the employer who owns the job can delete it
+    // -----------------------------------------------------------
+    public function handleDeleteJob($data) {
+        if (!isset($_SESSION["user_id"])) {
+            echo json_encode(["status" => "error", "message" => "You are not logged in."]);
+            return;
+        }
+
+        $jobId    = (int) ($data["job_id"] ?? 0);
+        $employer = $this->jobModel->getEmployerByUserId($_SESSION["user_id"]);
+
+        if (!$employer) {
+            echo json_encode(["status" => "error", "message" => "Employer profile not found."]);
+            return;
+        }
+
+        // Make sure this job actually belongs to this employer
+        if (!$this->jobModel->jobBelongsToEmployer($jobId, $employer["id"])) {
+            echo json_encode(["status" => "error", "message" => "You do not have permission to delete this job."]);
+            return;
+        }
+
+        $deleted = $this->jobModel->deleteJob($jobId);
+
+        if ($deleted > 0) {
+            echo json_encode(["status" => "success", "message" => "Job deleted."]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Could not delete the job."]);
+        }
+    }
+
+    // -----------------------------------------------------------
+    // Save or update the employer's company name and logo
+    // -----------------------------------------------------------
+    public function handleSaveEmployerProfile($data) {
+        if (!isset($_SESSION["user_id"])) {
+            echo json_encode(["status" => "error", "message" => "You are not logged in."]);
+            return;
+        }
+
+        $userId      = (int) $_SESSION["user_id"];
+        $companyName = $this->conn->real_escape_string(trim($data["company_name"] ?? ""));
+        $logoUrl     = $this->conn->real_escape_string(trim($data["company_logo_url"] ?? ""));
+
+        // Check if this employer already has a profile row
+        $result = $this->conn->query("SELECT id FROM employers WHERE user_id = $userId LIMIT 1");
+
+        if ($result && $result->num_rows > 0) {
+            // Update the existing row
+            $this->conn->query("UPDATE employers SET company_name = '$companyName', company_logo_url = '$logoUrl' WHERE user_id = $userId");
+        } else {
+            // Create a new row
+            $this->conn->query("INSERT INTO employers (user_id, company_name, company_logo_url) VALUES ($userId, '$companyName', '$logoUrl')");
+        }
+
+        echo json_encode(["status" => "success", "message" => "Profile saved."]);
     }
 }
