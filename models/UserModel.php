@@ -17,8 +17,12 @@ class UserModel {
     // Returns the user row as an array, or false if not found
     // -----------------------------------------------------------
     public function findByEmail($email) {
-        $email  = $this->conn->real_escape_string($email);
-        $result = $this->conn->query("SELECT id, name, email, password, role FROM users WHERE email = '$email' LIMIT 1");
+        // Prepare the query with ? as a placeholder for the email value
+        $stmt = $this->conn->prepare("SELECT id, name, email, password, role FROM users WHERE email = ? LIMIT 1");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
 
         if ($result && $result->num_rows > 0) {
             return $result->fetch_assoc();
@@ -32,12 +36,11 @@ class UserModel {
     // Returns the new user's ID, or false if it failed
     // -----------------------------------------------------------
     public function createUser($name, $email, $password, $role) {
-        $name     = $this->conn->real_escape_string($name);
-        $email    = $this->conn->real_escape_string($email);
-        $password = $this->conn->real_escape_string($password);
-        $role     = $this->conn->real_escape_string($role);
+        $stmt = $this->conn->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
 
-        $this->conn->query("INSERT INTO users (name, email, password, role) VALUES ('$name', '$email', '$password', '$role')");
+        // "ssss" means four string placeholders, one per ? in order
+        $stmt->bind_param("ssss", $name, $email, $password, $role);
+        $stmt->execute();
 
         if ($this->conn->insert_id) {
             return $this->conn->insert_id;
@@ -51,7 +54,14 @@ class UserModel {
     // -----------------------------------------------------------
     public function createEmployer($userId) {
         $userId = (int) $userId;
-        return $this->conn->query("INSERT INTO employers (user_id, company_name, company_logo_url) VALUES ($userId, '', '')");
+
+        // since napasa naman na ang uban values sa db through the user gamit lang ta placeholder aria 
+        $stmt = $this->conn->prepare("INSERT INTO employers (user_id) VALUES (?)");
+
+        // "i" means the placeholder expects an integer type
+        $stmt->bind_param("i", $userId);
+
+        return $stmt->execute();
     }
 
     // -----------------------------------------------------------
@@ -59,6 +69,11 @@ class UserModel {
     // -----------------------------------------------------------
     public function createJobSeeker($userId) {
         $userId = (int) $userId;
-        return $this->conn->query("INSERT INTO job_seekers (user_id) VALUES ($userId)");
+
+        $stmt = $this->conn->prepare("INSERT INTO job_seekers (user_id) VALUES (?)");
+
+        $stmt->bind_param("i", $userId);
+
+        return $stmt->execute();
     }
 }

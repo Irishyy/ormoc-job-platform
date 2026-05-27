@@ -13,7 +13,7 @@ class AuthController {
     // get the user's name and email, then log them in (or create an account).
     // -----------------------------------------------------------
     public function handleGoogleLogin($data) {
-        $db        = (new DatabaseConnection())->connect();
+        $db = (new DatabaseConnection())->connect();
         $userModel = new UserModel($db);
 
         // Make sure we received the Google token
@@ -25,7 +25,7 @@ class AuthController {
         $role = $data["role"] ?? "seeker";
 
         // Ask Google to verify the token and give us the user's info
-        $googleUrl      = "https://oauth2.googleapis.com/tokeninfo?id_token=" . urlencode($data["credential"]);
+        $googleUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" . urlencode($data["credential"]);
         $googleResponse = file_get_contents($googleUrl);
 
         if (!$googleResponse) {
@@ -43,7 +43,7 @@ class AuthController {
         }
 
         $email = $googleData["email"];
-        $name  = $googleData["name"];
+        $name = $googleData["name"];
 
         // Check if this person already has an account
         $user = $userModel->findByEmail($email);
@@ -62,7 +62,7 @@ class AuthController {
         }
 
         // Save the user info in the session so they stay logged in
-        $_SESSION["user_id"]   = $user["id"];
+        $_SESSION["user_id"] = $user["id"];
         $_SESSION["user_role"] = $user["role"];
 
         echo json_encode(["status" => "success", "role" => $user["role"]]);
@@ -125,7 +125,7 @@ class AuthController {
 
         // Check if the user exists and the password matches
         if ($user && password_verify($data["password"], $user["password"])) {
-            $_SESSION["user_id"]   = $user["id"];
+            $_SESSION["user_id"] = $user["id"];
             $_SESSION["user_role"] = $user["role"];
 
             echo json_encode(["status" => "success", "role" => $user["role"]]);

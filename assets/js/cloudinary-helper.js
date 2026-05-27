@@ -23,7 +23,7 @@ window.uploadMediaFile = async function uploadMediaFile(file, folder) {
         || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
     var endpoint = isDocument ? "raw" : "image";
-    var url      = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_NAME + "/" + endpoint + "/upload";
+    var url = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_NAME + "/" + endpoint + "/upload";
     var response = await axios.post(url, formData);
 
     if (response.data && response.data.secure_url) {
