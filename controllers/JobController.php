@@ -97,7 +97,7 @@ class JobController {
             return;
         }
 
-        $jobId    = (int) ($data["job_id"] ?? 0);
+        $jobId = (int) ($data["job_id"] ?? 0);
         $employer = $this->jobModel->getEmployerByUserId($_SESSION["user_id"]);
 
         if (!$employer) {
@@ -129,9 +129,9 @@ class JobController {
             return;
         }
 
-        $userId      = (int) $_SESSION["user_id"];
+        $userId = (int) $_SESSION["user_id"];
         $companyName = $this->conn->real_escape_string(trim($data["company_name"] ?? ""));
-        $logoUrl     = $this->conn->real_escape_string(trim($data["company_logo_url"] ?? ""));
+        $logoUrl = $this->conn->real_escape_string(trim($data["company_logo_url"] ?? ""));
 
         // Check if this employer already has a profile row
         $result = $this->conn->query("SELECT id FROM employers WHERE user_id = $userId LIMIT 1");

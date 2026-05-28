@@ -9,7 +9,7 @@ window.uploadMediaFile = async function uploadMediaFile(file, folder) {
     formData.append("upload_preset", CLOUDINARY_PRESET);
     formData.append("folder", folder);
 
-    var url      = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_NAME + "/auto/upload";
+    var url = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_NAME + "/auto/upload";
     var response = await axios.post(url, formData);
 
     if (response.data && response.data.secure_url) {

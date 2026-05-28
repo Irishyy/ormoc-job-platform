@@ -87,7 +87,7 @@ async function handleLogoUpload(event) {
 
         await axios.post("../routes/api.php?action=save_employer_profile", {
             company_name: document.getElementById("companyNameInput").value.trim() || "My Company",
-            company_logo_url:  logoUrl
+            company_logo_url: logoUrl
         });
 
         document.getElementById("companyLogo").src = logoUrl;
@@ -99,7 +99,7 @@ async function handleLogoUpload(event) {
 }
 
 
-// ─── Save Company Name ────────────────────────────────────
+// Save Company Name
 
 async function handleSaveCompanyName() {
     var name = document.getElementById("companyNameInput").value.trim();
@@ -111,7 +111,7 @@ async function handleSaveCompanyName() {
 
     try {
         var res = await axios.post("../routes/api.php?action=save_employer_profile", {
-            company_name:     name,
+            company_name: name,
             company_logo_url: document.getElementById("companyLogo").src
         });
 
