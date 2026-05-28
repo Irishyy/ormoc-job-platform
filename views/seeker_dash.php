@@ -5,20 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Seeker Dashboard</title>
     
-<<<<<<< HEAD
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="../assets/css/seeker_dash.css">
-=======
+    
+    <link rel="stylesheet" href="/ormoc-job-platform/assets/css/seeker_dash.css">
     <link rel="stylesheet" href="/ormoc-job-platform/assets/css/style.css">
     
     <style>
-        /* Structural Layout & Spacing Engine Only */
         body { 
+
             margin: 0; 
             font-family: sans-serif; 
         }
         
-        /* Layout Framework Split */
+
         .sidebar { 
             width: 260px; 
             height: 100vh; 
@@ -107,7 +106,6 @@
             border-bottom: 1px solid #ccc; 
         }
     </style>
->>>>>>> 344b2991fd1404c4b197cd3d915c2c32fe6b433c
 </head>
 <body>
 
@@ -135,16 +133,23 @@
                 </li>
             </ul>
         </nav>
-</aside>
-
-<a href="https://apps.evsu.edu.ph/" target="_blank" rel="noopener noreferrer" class="evsu-top-left-link" aria-label="Open EVSU App">
-    <img src="/ormoc-job-platform/EVSU_Official_Logo.png" alt="EVSU Logo" class="evsu-logo" />
-</a>
+    </aside>
 
     <main class="main-content">
 
         <section id="panel-explore-map" class="dashboard-panel">
-            <h2>🗺️ Live Interactive Vacancy Feed</h2>
+            
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                <a href="https://apps.evsu.edu.ph/" target="_blank" rel="noopener noreferrer" aria-label="Open EVSU App">
+                    <img
+                        src="/ormoc-job-platform/assets/EVSU_Official_Logo.png"
+                        alt="EVSU Logo"
+                        style="height: 45px; width: auto; display: block;"
+                        onerror="this.onerror=null; this.src='/ormoc-job-platform/assets/ormocjobseeek.png';"
+                    />
+                </a>
+                <h2 style="margin: 0;">🗺️ Live Interactive Vacancy Feed</h2>
+            </div>
             <hr>
             
             <div class="seeker-grid">

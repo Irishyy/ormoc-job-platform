@@ -1,6 +1,3 @@
-/* ==========================================================================
-   💎 PLATFORM PREMIUM UI STYLING ENGINE - CRIMSON, BLACK, & WHITE
-   ========================================================================== */
 
 :root {
     --bg-main: #fcfcfc;
@@ -9,26 +6,22 @@
     --text-muted: #6e6e73;
     --text-light: #ffffff;
     
-    /* Personal Branding Palette */
     --accent-red: #da291c;
     --accent-red-hover: #b31d14;
     --accent-red-light: #fce8e6;
     --border-color: #e8e8ed;
 
-    /* Semantic Status Colors */
     --status-pending: #d97706;
     --status-reviewed: #2563eb;
     --status-accepted: #16a34a;
     --status-rejected: #dc2626;
 
-    /* Layout Constants */
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
     --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.06);
     --radius: 12px;
     --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Global Platform Resets */
 body { 
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -53,9 +46,7 @@ h2 {
     color: var(--text-dark);
 }
 
-/* ==========================================================================
-   🔑 PORTAL ACCESS GATEWAY (login.php)
-   ========================================================================== */
+
 .login-body-wrapper {
     display: flex;
     justify-content: center;
@@ -148,9 +139,7 @@ h2 {
     border-color: #8e8e93;
 }
 
-/* ==========================================================================
-   🎛️ BACKBONE LAYOUT & APPLICATION SIDEBAR
-   ========================================================================== */
+
 .sidebar { 
     width: 280px;
     height: 100vh;
@@ -174,7 +163,7 @@ h2 {
     min-height: 100vh;
 }
 
-/* Profile Section Component */
+
 .profile-upload-container { 
     text-align: center;
     margin-bottom: 40px;
@@ -204,7 +193,7 @@ h2 {
     letter-spacing: -0.3px;
 }
 
-/* Contextual Control Row */
+
 .company-name-row {
     display: flex;
     gap: 8px;
@@ -279,9 +268,7 @@ h2 {
     box-shadow: 0 4px 12px rgba(218, 41, 28, 0.25);
 }
 
-/* ==========================================================================
-   🤑 DESKTOP MODULE WORKSPACE CARDS & GRAPHICS
-   ========================================================================== */
+
 .dashboard-grid { 
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
@@ -374,9 +361,6 @@ button[type="submit"]:hover {
     box-shadow: var(--shadow-sm);
 }
 
-/* ==========================================================================
-   📊 DATA STORAGE TABLES Engine
-   ========================================================================== */
 table { 
     width: 100%;
     border-collapse: separate;
@@ -428,9 +412,6 @@ tr:hover td {
     text-transform: uppercase;
 }
 
-/* ==========================================================================
-   🎓 INSTITUTIONAL LOGO INNER ENGINE (EVSU BRANDING)
-   ========================================================================== */
 .evsu-branding-container {
     text-align: center;
     padding: 15px 0;
