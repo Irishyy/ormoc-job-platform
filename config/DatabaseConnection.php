@@ -7,8 +7,8 @@ class DatabaseConnection {
     // Your database login details — change these to match your setup
     private $host = "localhost";
     private $user = "root";
-    private $pass = "";         // Leave empty if you have no password (default XAMPP)
-    private $db   = "ormoc_job_db";
+    private $pass = "";         
+    private $db = "ormoc_job_db";
 
     public $conn; // The connection object other files will use
 

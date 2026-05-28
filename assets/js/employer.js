@@ -145,8 +145,8 @@ async function handleJobSubmit(event) {
         var res = await axios.post("../routes/api.php?action=publish_job", {
             title:       document.getElementById("jobTitle").value,
             description: document.getElementById("jobDesc").value,
-            latitude:    lat,
-            longitude:   lng
+            latitude: lat,
+            longitude:  lng
         });
 
         if (res.data.status === "success") {
