@@ -7,118 +7,6 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="/ormoc-job-platform/assets/css/style.css">
-    
-    <style>
-        /* Structural Layout & Spacing Engine Only */
-        body { 
-            margin: 0; 
-            font-family: sans-serif; 
-        }
-        
-        /* Layout Framework Split */
-        .sidebar { 
-            width: 260px; 
-            height: 100vh; 
-            position: fixed; 
-            padding: 20px; 
-            box-sizing: border-box; 
-        }
-        
-        .main-content { 
-            margin-left: 280px; 
-            padding: 40px; 
-            width: calc(100% - 280px); 
-            box-sizing: border-box; 
-        }
-
-        /* Profile Block Spacing */
-        .profile-upload-container { 
-            text-align: center; 
-            margin-bottom: 30px; 
-        }
-        .profile-upload-container img { 
-            width: 100px; 
-            height: 100px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            cursor: pointer; 
-        }
-
-        /* Company Name Input Row */
-        .company-name-row {
-            display: flex;
-            gap: 6px;
-            margin-top: 10px;
-            justify-content: center;
-        }
-        .company-name-row input {
-            width: 140px;
-            padding: 6px 8px;
-            font-size: 13px;
-            box-sizing: border-box;
-        }
-        .company-name-row button {
-            padding: 6px 10px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        /* Sidebar Navigation List Spacing */
-        .sidebar-menu ul { 
-            list-style: none; 
-            padding: 0; 
-            margin: 0; 
-        }
-        .sidebar-menu li { 
-            margin-bottom: 15px; 
-        }
-        .sidebar-menu a { 
-            text-decoration: none; 
-            display: block; 
-            padding: 10px; 
-        }
-
-        /* Workspace Grid Split for Overview */
-        .dashboard-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 30px; 
-            margin-top: 20px; 
-        }
-        
-        /* Form Field Element Spacing */
-        .form-group { 
-            margin-bottom: 20px; 
-        }
-        .form-group label { 
-            display: block; 
-            margin-bottom: 8px; 
-        }
-        .form-group input, 
-        .form-group textarea { 
-            width: 100%; 
-            padding: 10px; 
-            box-sizing: border-box; 
-        }
-        
-        button[type="submit"] { 
-            width: 100%; 
-            padding: 12px; 
-            cursor: pointer; 
-        }
-
-        /* Table Padding Blocks */
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 20px; 
-        }
-        th, td { 
-            padding: 12px; 
-            text-align: left; 
-            border-bottom: 1px solid #ccc; 
-        }
-    </style>
 </head>
 <body>
 
@@ -161,7 +49,8 @@
             <div class="dashboard-grid">
                 <div class="workspace-card">
                     <h3>Post a New Job Listing</h3>
-                    <form id="jobForm" onsubmit="event.preventDefault();">
+                    <form id="jobForm" onsubmit="event.preventDefault();"> 
+                        <!-- naa nay preventDefault daan -->
                         <div class="form-group">
                             <label>Job Title</label>
                             <input id="jobTitle" type="text" name="title" required placeholder="e.g., Senior PHP Developer">

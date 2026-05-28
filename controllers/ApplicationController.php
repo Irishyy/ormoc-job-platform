@@ -27,17 +27,17 @@ class ApplicationController {
         // Join across 4 tables to get the applicant name, job title, resume, and status
         $result = $this->conn->query("
             SELECT
-                a.id         AS application_id,
+                a.id AS application_id,
                 a.resume_url,
                 a.status,
                 a.applied_at,
-                j.title      AS job_title,
-                u.name       AS applicant_name
-            FROM applications a
-            INNER JOIN jobs j        ON a.job_id    = j.id
+                j.title AS job_title,
+                u.name  AS applicant_name
+            FROM applications    a
+            INNER JOIN jobs j ON a.job_id    = j.id
             INNER JOIN employers e   ON j.employer_id = e.id
             INNER JOIN job_seekers js ON a.seeker_id = js.id
-            INNER JOIN users u       ON js.user_id   = u.id
+            INNER JOIN users u  ON js.user_id   = u.id
             WHERE e.user_id = $userId
             ORDER BY a.applied_at DESC
         ");
@@ -63,7 +63,7 @@ class ApplicationController {
         }
 
         $applicationId = (int) ($data["application_id"] ?? 0);
-        $status        = $this->conn->real_escape_string($data["status"] ?? "");
+        $status = $this->conn->real_escape_string($data["status"] ?? "");
 
         // Only allow these four status values (they match the database column)
         $allowedStatuses = ["pending", "reviewed", "accepted", "rejected"];

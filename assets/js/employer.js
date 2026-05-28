@@ -7,34 +7,39 @@
 //   - Posting, viewing, and deleting jobs
 //   - Viewing applicants and updating their status
 
-var employerMap     = null;
+var employerMap = null;
 var selectedMarker  = null;
 
 // ─── Tab Switching ────────────────────────────────────────
 
 function initTabs() {
-    var tabs   = document.querySelectorAll(".nav-tab");
+    var tabs = document.querySelectorAll(".nav-tab");
     var panels = document.querySelectorAll(".dashboard-panel");
 
     tabs.forEach(function(tab) {
         tab.addEventListener("click", function(e) {
             e.preventDefault();
-
-            // Deactivate all tabs
-            tabs.forEach(function(t) { t.classList.remove("active"); });
-            // Hide all panels
-            panels.forEach(function(p) { p.style.display = "none"; });
+            
+            // loop to deact all tabs
+            tabs.forEach(function(t) { 
+                t.classList.remove("active"); 
+            });
+            // loop to hide all panels
+            panels.forEach(function(p) { 
+                p.style.display = "none"; 
+            });
 
             // Activate the clicked tab and show its panel
             tab.classList.add("active");
             var targetId = tab.getAttribute("data-target");
             document.getElementById(targetId).style.display = "block";
 
-            // Leaflet needs a nudge when its container becomes visible
-            if (targetedPanelId === 'panel-overview' && window.employerMap) {
+            // Leaflet needs to be nudged when map container becomes visible
+            if (targetId === 'panel-overview' && employerMap) {
                 setTimeout(function() {
                     window.employerMap.invalidateSize();
-                }, 100); // Gihatagan og 100ms aron makamata og hapsay ang map container
+                }, 100); 
+                // Gihatagan og 100ms aron makamata og hapsay ang map container
             }
         });
     });
@@ -42,6 +47,7 @@ function initTabs() {
 
 
 // ─── Map ──────────────────────────────────────────────────
+
 
 function initMap() {
     employerMap = createBaseOrmocMap("map");
@@ -69,8 +75,7 @@ function initMap() {
 }
 
 
-// ─── Logo Upload ──────────────────────────────────────────
-
+// logo Upload
 async function handleLogoUpload(event) {
     var file = event.target.files[0];
     if (!file) return;
@@ -81,7 +86,7 @@ async function handleLogoUpload(event) {
         var logoUrl = await uploadMediaFile(file, "company_logos");
 
         await axios.post("../routes/api.php?action=save_employer_profile", {
-            company_name:      document.getElementById("companyNameInput").value.trim() || "My Company",
+            company_name: document.getElementById("companyNameInput").value.trim() || "My Company",
             company_logo_url:  logoUrl
         });
 
@@ -271,9 +276,7 @@ async function loadApplicantsTable() {
                 </td>
                 <td><span class="status-pill status-${app.status}">${app.status.toUpperCase()}</span></td>
                 <td>
-                    <select onchange="updateStatus(${app.application_id}, this.value)">
-                        ${dropdownOptions}
-                    </select>
+                    ${dropdown}
                 </td>
             </tr>
         `;
@@ -283,7 +286,6 @@ async function loadApplicantsTable() {
         console.error("Load applicants error:", err);
     }
 }
-
 
 // ─── Boot ─────────────────────────────────────────────────
 
